@@ -18,9 +18,9 @@ class FaceDetectionModel:
 
         imgSmall = cv2.resize(img, (0, 0),
                               fx=1/IMG_SCALE,
-                              fy=1/IMG_SCALE)[:, :, ::-1]
+                              fy=1/IMG_SCALE)
 
-        boundingBoxes = fr.face_locations(img,
+        boundingBoxes = fr.face_locations(imgSmall,
                                           number_of_times_to_upsample=2)
 
         return list((int(top * IMG_SCALE),
@@ -51,3 +51,4 @@ class FaceDetectionModel:
 
     def updateFaceDBCache(self):
         # TODO: read in any values we don't have in the cache from the database
+        pass
