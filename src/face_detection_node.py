@@ -62,9 +62,9 @@ class FaceHandler:
     def scanningMode(self, img):
         boundingBoxes = self.fdm.getBoundingBoxes(img)
         print(boundingBoxes)
-        #if len(boundingBoxes) > 0:
-            #self.trackingFace = self.fdm.selectFaceToTrack(boundingBoxes, img)
-            #self.mode = self.MODE_TRACKING
+        if len(boundingBoxes) > 0:
+            self.trackingFace = self.fdm.selectFaceToTrack(boundingBoxes, img)
+            self.mode = self.MODE_TRACKING
 
         for box in boundingBoxes:
             img = self.drawBoundingBox(img, box, colour=(0, 0, 255))
