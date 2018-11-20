@@ -34,8 +34,12 @@ class FaceHandler:
                                          queue_size=1)
         self.interactionCompleteSub = rospy.Subscriber("interaction_complete",
                                                        Empty,
-                                                       self.completeCallback<
+                                                       self.completeCallback,
                                                        queue_size=1)
+        self.newFaceAddedSub = rospy.Subscriber("new_face_added",
+                                                Empty,
+                                                self.newFaceCallback,
+                                                queue_size=1)
 
         self.bridge = CvBridge()
 
@@ -55,6 +59,9 @@ class FaceHandler:
 
             elif self.mode == self.MODE_LOCKED:
                 self.lockedMode(img)
+
+    def newFaceCallback(self):
+        self.fdm.updateFaceDBCache()
 
     def scanningMode(self, img):
         boundingBoxes = self.fdm.getBoundingBoxes(img)
