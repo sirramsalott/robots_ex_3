@@ -28,7 +28,7 @@ class FaceHandler:
         self.newFaceLockedPub = rospy.Publisher("new_face_locked", NewFaceLocked)
         self.faceLostPub = rospy.Publisher("face_lost", Empty)
 
-        self.imageSub = rospy.Subscriber("/usb_cam/image_raw",
+        self.imageSub = rospy.Subscriber("/camera/rgb/image_raw",
                                          Image,
                                          self.imageCallback,
                                          queue_size=1)
