@@ -9,27 +9,30 @@ import ui_lib as ui
 
 class UI:
     def __init__(self):
-        self.faceLockedSub = rospy.Subscriber("face_locked",
-                                              FaceLocked,
-                                              self.faceLockedCallback,
-                                              queue=1)
+        self.studentFaceLockedSub = rospy.Subscriber("student_face_locked",
+                                              StudentFaceLocked,
+                                              self.studentFaceLockedCallback,
+                                              queue_size=1)
+        self.newFaceLockedSub = rospy.Subscriber("new_face_locked",
+                                                 NewFaceLocked,
+                                                 self.newFaceLockedCallback,
+                                                 queue_size=1)
         self.faceLostSub = rospy.Subscriber("face_lost",
                                             Empty,
                                             self.faceLostCallback,
-                                            queue=1)
+                                            queue_size=1)
 
         self.interactionCompletePub = rospy.Publisher("interaction_complete",
                                                       Empty)
+        self.newFaceAddedPub = rospy.Publisher("new_face_added",
+                                               Empty)
 
-    def faceLockedCallback(self, msg):
-        if msg.type == msg.TYPE_STUDENT:
-            ui.nagStudent(msg.id)
-        elif msg.type == msg.TYPE_STAFF:
-            ui.reportAbsentees(msg.id)
-        elif msg.type == msg.TYPE_UNKNOWN:
-            # need to know face representation and add it to the message
-            # before we can do this one
-            pass
+    def studentFaceLockedCallback(msg):
+        ui.nagStudent(msg.studentID)
+        self.publishInteractionComplete()
+
+    def newFaceLockedCallback(self, msg):
+        # TODO: work out FSM for this state
 
     def faceLostCallback(self, msg):
         # need some way to kill interaction if the face is lost
