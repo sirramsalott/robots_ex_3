@@ -1,30 +1,48 @@
-TYPE_STUDENT = 1
-TYPE_STAFF = 2
-TYPE_UNKNOWN = 3
+import face_recognition as fr
+import cv2
 
 class Face:
-    pass
+    def __init__(self, eigenface, studentID=None):
+        self.studentID = studentID
+        self.eigenface = eigenface
 
-def getAllFaces(img_np):
-    # expect: nparray representing the image
-    return # list of Face objects found in image
 
-def selectFaceToTrack(faces):
-    # expect: list of Face objects
-    return # the Face object we'd like to track next
+class FaceDetectionModel:
+    def __init__(self):
+        pass
 
-def findFaceInImage(img_np, face):
-    # expect: np array of image, Face object to find
-    return # bounding box containing that face
+    def getBoundingBoxes(self, img):
+        IMG_SCALE = 4.
 
-def faceIsCentred(boundingBox, img_np):
-    # expect: bounding box containing a face, np array of image
-    return # whether the camera is sufficiently centred on the face to begin interacting with it
+        imgSmall = cv2.resize(img, (0, 0),
+                              fx=1/IMG_SCALE,
+                              fy=1/IMG_SCALE)[:, :, ::-1]
 
-def boundingBoxCentre(boundingBox):
-    # expect: a bounding box
-    return # centre of the bounding box in image coordinates
+        boundingBoxes = fr.face_locations(img,
+                                          number_of_times_to_upsample=2)
 
-def faceTypeAndID(face):
-    # expect: Face object
-    return # the type (student/staff/unrecognised) and database ID (if known) of the face
+        return list((int(top * IMG_SCALE),
+                     int(right * IMG_SCALE),
+                     int(bottom * IMG_SCALE),
+                     int(left * IMG_SCALE))
+                    for (top, right, bottom, left) in boundingBoxes)
+
+    def selectFaceToTrack(self, boundingBoxes, img):
+        # TODO: we just go to the closest face, but is this best?
+        biggestBoundingBox = max(boundingBoxes,
+                                 key=lambda box: box[1] - box[3])
+        return fr.face_encodings(face_image=img,
+                                 known_face_locations=[biggestBoundingBox])[0]
+
+    def facesMatch(self, boundingBox, img, faceToMatch):
+        eigenface = fr.face_encodings(face_image=img,
+                                      known_face_locations=[boundingBox])[0]
+
+        return any(fr.compare_faces([faceToMatch], eigenface)), eigenface
+
+    def getFaceID(self, eigenface):
+        return # database ID of this eigenface, if it exists in the database
+
+    def faceIsCentred(self, boundingBox, img):
+        # expect: bounding box containing a face, image
+        return # whether the camera is sufficiently centred on the face to begin interacting with it
