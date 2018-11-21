@@ -3,12 +3,16 @@
 import rospy
 
 from std_msgs.msg import Empty
-from robots_exercise_3.msg import FaceLocked
+from robots_exercise_3.msg import StudentFaceLocked, NewFaceLocked
 
-import ui_lib as ui
+from ui_presenter import UIPresenter
+from text_ui import TextView
 
-class UI:
-    def __init__(self):
+
+class UIHandler:
+    def __init__(self, view):
+        self.UIPresenter = UIPresenter(view)
+
         self.studentFaceLockedSub = rospy.Subscriber("student_face_locked",
                                               StudentFaceLocked,
                                               self.studentFaceLockedCallback,
@@ -23,26 +27,29 @@ class UI:
                                             queue_size=1)
 
         self.interactionCompletePub = rospy.Publisher("interaction_complete",
-                                                      Empty)
+                                                      Empty,
+                                                      queue_size=1)
         self.newFaceAddedPub = rospy.Publisher("new_face_added",
-                                               Empty)
+                                               Empty,
+                                               queue_size=1)
 
-    def studentFaceLockedCallback(msg):
-        ui.nagStudent(msg.studentID)
+    def studentFaceLockedCallback(self, msg):
+        self.UIPresenter.nagStudent(msg.studentID)
         self.publishInteractionComplete()
 
     def newFaceLockedCallback(self, msg):
-        # TODO: work out FSM for this state
+        self.UIPresenter.newUser(msg.eigenface)
+        self.newFaceAddedPub.publish(Empty())
 
     def faceLostCallback(self, msg):
-        # need some way to kill interaction if the face is lost
-        pass
+        self.UIPresenter.killInteraction()
 
     def publishInteractionComplete(self):
         self.interactionCompletePub.publish(Empty())
 
 
 if __name__ == "__main__":
+    view = TextView()
+    uiHandler = UIHandler(view)
     rospy.init_node("ui")
-    ui = UI()
     rospy.spin()
