@@ -11,3 +11,6 @@ def getLectureNameAndLocation(lectureID):
 def storeNewStudent(studentID, eigenface):
     # Store a new student, with their face, in the DB
     pass
+
+def getNewFaces(existingStudentIDs):
+    return # (studentID, eigenface) pairs from database that are not already in the cache

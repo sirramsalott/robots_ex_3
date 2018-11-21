@@ -1,6 +1,8 @@
 import face_recognition as fr
 import cv2
 
+import db_interface as db
+
 
 class Face:
     def __init__(self, eigenface, studentID=None):
@@ -10,7 +12,7 @@ class Face:
 
 class FaceDetectionModel:
     def __init__(self):
-        self.faceDBCache = None
+        self.faceDBCache = []
         self.faceDBCache = self.updateFaceDBCache()
 
     def getBoundingBoxes(self, img):
@@ -42,13 +44,16 @@ class FaceDetectionModel:
 
         return any(fr.compare_faces([faceToMatch], eigenface)), eigenface
 
-    def getFaceID(self, eigenface):
-        return # database ID of this eigenface, if it exists in the database
+    def getFaceID(self, faceToMatch):
+        for studentID, eigenface in self.faceDBCache:
+            if any(fr.compare_faces([faceToMatch], eigenface):
+                   return studentID
+
+        return None
 
     def faceIsCentred(self, boundingBox, img):
         # expect: bounding box containing a face, image
         return # whether the camera is sufficiently centred on the face to begin interacting with it
 
     def updateFaceDBCache(self):
-        # TODO: read in any values we don't have in the cache from the database
-        pass
+        self.faceDBCache += db.getNewFaces(existingStudentIDs=self.faceDBCache)
