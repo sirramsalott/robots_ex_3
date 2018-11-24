@@ -1,0 +1,10 @@
+<launch>
+
+	<!-- Start the lasers and p2os -->
+	<include file="/data/private/ros/socspioneer/p2os_laser.launch" />
+
+
+	<!-- Transform for the sonar sensors -->
+	<!--<node pkg="tf" type="static_transform_publisher" name="stp_sonar0" output="screen" args="0.0 0.0 0.0 0.0 0.0 0.0 base_link map 100" />-->
+
+</launch>
