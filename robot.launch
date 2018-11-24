@@ -1,0 +1,5 @@
+<launch>
+
+    <include file="/data/private/robotics/src/robots_ex_3/waypoint_config.launch" />
+
+</launch>
