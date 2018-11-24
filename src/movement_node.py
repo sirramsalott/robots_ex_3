@@ -2,9 +2,17 @@ from enum import Enum
 
 import rospy
 import actionlib
+import face_detection_lib as fd
+import movement_model as mm
 from robots_ex_3.msg import MoveBaseAction, MoveBaseGoal
-from msg import TrackFace, FaceLocked
+from msg import TrackFace, FaceLocked, OccupancyGrid
 from msgs.msg import Empty
+from geometry_msgs.msg import Pose, Quaternion
+import sensor_model
+import math
+from util import rotateQuaternion
+import sys
+import random as rand
 
 
 class BaseStates(Enum):
@@ -27,9 +35,29 @@ class ExploreResponses(Enum):
 class MovementNode:
 
     def __init__(self):
+
+        self.sensor_model = sensor_model.SensorModel()
+
         self.base_state = BaseStates.EXPLORE
         self.explore_state = ExploreStates.NO_GOAL
 
+        self.face_threshold = 10  # how many pixels either side of the centre are classed as central
+
+        # Sort out the map
+        self.occupancy_map = OccupancyGrid()
+        rospy.loginfo("Waiting for a map...")
+        try:
+            occupancy_map = rospy.wait_for_message("/map", OccupancyGrid, 20)
+        except:
+            rospy.logerr("Problem getting a map. Check that you have a map_server"
+                         " running: rosrun map_server map_server <mapname> ")
+            sys.exit(1)
+        rospy.loginfo("Map received. %d X %d, %f px/m." %
+                      (occupancy_map.info.width, occupancy_map.info.height,
+                       occupancy_map.info.resolution))
+        self.set_map(occupancy_map)
+
+        # Subscribe to the facial topics
         self.faceTrackListener = rospy.Subscriber("/track_face", TrackFace, self.faceListener(), queue_size=1)
         self.faceLockListener = rospy.Subscriber("/face_locked", FaceLocked, self.faceListener(), queue_size=1)
         self.faceLossListener = rospy.Subscriber("/face_lost", Empty, self.faceListener(), queue_size=1)
@@ -120,21 +148,32 @@ class MovementNode:
             return ExploreResponses.GOAL_IN_PROGRESS
 
         goal = MoveBaseGoal()
-        goal.target_pose.header.frame_id = "map"
+        goal.target_pose.header.frame_id = "/map"
         goal.target_pose.header.stamp = rospy.Time.now()
         goal.target_pose.pose = self.next_waypoint()
         self.current_goal = goal
         self.move_client.send_goal(goal, self.done_cb, self.active_cb, self.feedback_cb)
+        print("Spinning...")
         rospy.spin()
+        print("Passed spin")
 
     def track_face(self):
         """
         Move according to the most recent face message
         :return:
         """
-        # TODO Get x center of image
-        # TODO Get size of image
-        # TODO move towards the face
+
+        face = self.recentFace
+        x_centre = face.left + face.right / 2
+        img_x_centre = fd.image_width / 2
+
+        if x_centre < img_x_centre - self.face_threshold:
+            pass  # TODO spin left
+        elif x_centre > img_x_centre + self.face_threshold:
+            pass  # TODO spin right
+
+        # TODO move forward
+        return
 
     def faceListener(self, face):
         """
@@ -167,8 +206,59 @@ class MovementNode:
     def next_waypoint(self):
         """
         Determine the next waypoint to navigate to
-        :return:
+        :return: Random point on the map
         """
+        while True:
+            rand_x = rand.uniform(0, self.occupancy_map.info.width - 1)
+            rand_y = rand.uniform(0, self.occupancy_map.info.height - 1)
+
+            if not self.map_coords_occupied((rand_x, rand_y)):
+                rand_a = rand.uniform(0, 2 * math.pi)
+                new_pose = Pose()
+                new_pose.orientation = rotateQuaternion(q_orig=Quaternion(0, 0, 0, 1),
+                                                        yaw=rand_a)
+
+                world_x, world_y = self.map_coords_to_pose(rand_x, rand_y)
+
+                new_pose.location.x = world_x
+                new_pose.location.y = world_y
+
+                return new_pose
+
+    def set_map(self, occupancy_map):
+        """ Set the map for localisation """
+        self.occupancy_map = occupancy_map
+        self.sensor_model.set_map(occupancy_map)
+
+    def pose_to_map_coords(self, pose):
+        ox = pose.position.x
+        oy = pose.position.y
+
+        map_x = math.floor((
+                                   ox - self.sensor_model.map_origin_x) / self.sensor_model.map_resolution + 0.5) + self.sensor_model.map_width / 2
+        map_y = math.floor((
+                                   oy - self.sensor_model.map_origin_y) / self.sensor_model.map_resolution + 0.5) + self.sensor_model.map_height / 2
+
+        return int(math.floor(map_x)), int(math.floor(map_y))
+
+    def map_coords_to_pose(self, map_x, map_y):
+        x = self.sensor_model.map_resolution * (
+                map_x - self.sensor_model.map_width / 2) + self.sensor_model.map_origin_x
+        y = self.sensor_model.map_resolution * (
+                map_y - self.sensor_model.map_height / 2) + self.sensor_model.map_origin_y
+
+        return x, y
+
+    def map_pose_occupied(self, pose):
+        x, y = self.pose_to_map_coords(pose)
+        return self.map_coords_occupied((x, y))
+
+    def map_coords_occupied(self, coords):
+        (x, y) = coords
+        threshold = 80
+        prob_occupied = self.occupancy_map.data[x + y * self.occupancy_map.info.width]
+
+        return prob_occupied == -1 or prob_occupied > threshold
 
 
 if __name__ == '__main__':
