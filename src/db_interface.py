@@ -37,16 +37,33 @@ class DB_Interface:
                     """, (lectureID,))   
         return self.c.fetchone()
 
-    def storeNewStudent(self, studentID, eigenface):
+    def storeNewStudent(self, studentID, eigenface, name=None):
         # Store a new student, with their face, in the DB
-        
+        self.c.execute("INSERT OR IGNORE INTO Student(id, eigenface) VALUES (?,?)", (studentID, eigenface))
+        self.c.execute("UPDATE Student SET eigenface = ? WHERE id = ?", (eigenface, studentID))
+        if name != None:
+            self.c.execute("UPDATE Student SET name = ? WHERE id = ?", (name, studentID))
         pass
 
     def getNewFaces(self, existingStudentIDs):
-        return # (studentID, eigenface) pairs from database that are not already in the cache
+        # out of the list of existing student IDs needs to select student.id student.eigenface from student where student.id not in existing student ids
+        self.c.execute("""
+                    SELECT id, eigenface FROM Student
+                    WHERE id NOT IN (%s)
+        """ % ','.join('?' * len(existingStudentIDs)), existingStudentIDs)
+        return self.c.fetchall()
 
+    def getStudentName(self, studentID):
+        self.c.execute("SELECT name FROM Student WHERE id = ?", (studentID,))
+        return self.c.fetchone()
 
 if __name__ == "__main__":
+    # Code to test the database interface 
     db = DB_Interface()
     print(db.getLectureNameAndLocation(1))
     print(db.getStudentCurrentLecture(1549223))
+    db.storeNewStudent(1549228, 0, "Bob")
+    db.storeNewStudent(1549223, 0)
+    print(db.getStudentName(1549223))
+    print(db.getStudentName(1549228))
+    print(db.getNewFaces([]))

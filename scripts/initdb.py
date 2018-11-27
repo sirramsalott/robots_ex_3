@@ -27,7 +27,8 @@ c.execute("PRAGMA foreign_keys = ON;")
 # Re-create the tables
 create_student_query = """CREATE TABLE {}(
                             id INTEGER PRIMARY KEY, 
-                            name TEXT
+                            name TEXT,
+                            eigenface BLOB
 )
 """.format(STUDENT_TABLE_NAME)
 
@@ -86,6 +87,10 @@ c.execute(create_missed_query)
 
 # Some test data
 c.execute("INSERT INTO %s(id, name) VALUES (1549223, 'Matt');" % STUDENT_TABLE_NAME)
+c.execute("INSERT INTO %s(id, name) VALUES (1549224, 'George');" % STUDENT_TABLE_NAME)
+c.execute("INSERT INTO %s(id, name) VALUES (1549225, 'Adriana');" % STUDENT_TABLE_NAME)
+c.execute("INSERT INTO %s(id, name) VALUES (1549226, 'Mike');" % STUDENT_TABLE_NAME)
+c.execute("INSERT INTO %s(id, name) VALUES (1549227, 'Joe');" % STUDENT_TABLE_NAME)
 c.execute("INSERT INTO %s(name, email) VALUES ('Mohan', 'mohan@mohan.com');" % LECTURER_TABLE_NAME)
 c.execute("INSERT INTO %s(name, lecturerid) VALUES ('Intelligent Robotics', 1);" % MODULE_TABLE_NAME)
 c.execute("INSERT INTO %s(studentid, moduleid) VALUES (1549223, 1);" % ENROLLMENT_TABLE_NAME)
