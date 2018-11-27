@@ -1,4 +1,4 @@
-footprint: [ [-0.33,-0.33], [-0.33,0.33], [0.33,0.33], [0.33,-0.33] ]
+footprint: [ [-0.28,-0.28], [-0.28,0.28], [0.28,0.28], [0.28,-0.28] ]
 footprint_padding: 0.01
 
 robot_base_frame: base_link
@@ -6,8 +6,8 @@ transform_tolerance: 15.0
 
 resolution: 0.05
 
-obstacle_range: 2.0
-raytrace_range: 3.0
+obstacle_range: 2.3
+raytrace_range: 3.3
 plugins:
   - {name: static_map, type: "costmap_2d::StaticLayer"}
   - {name: obstacles_layer, type: "costmap_2d::ObstacleLayer"}
@@ -22,6 +22,6 @@ obstacles_layer:
   laser: {data_type: LaserScan, clearing: true, marking: true, topic: /base_scan, inf_is_valid: true}
 
 inflation_layer:
-  inflation_radius: 0.05
+  inflation_radius: 0.25
   cost_scaling_factor: 10.0
   lethal_cost_threshold: 10.0

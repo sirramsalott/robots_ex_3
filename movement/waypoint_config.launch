@@ -1,7 +1,7 @@
 <launch>
 
 	<!-- Start the lasers and p2os -->
-	<include file="/data/private/ros/socspioneer/p2os_laser.launch" />
+	<include file="$(find robots_exercise_3)/movement/p2os_laser.launch" />
 
 
 	<!-- Transform for the sonar sensors -->
