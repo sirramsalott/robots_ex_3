@@ -12,6 +12,17 @@ def timed(fn):
         return ret
     return timed
 
+def multiply_quaternions(qa, qb):
+    """
+    Multiplies two quaternions to give the roation of qb by qa
+    """
+    combined = Quaternion()
+    combined.w = (qa.w * qb.w - qa.x * qb.x - qa.y * qb.y - qa.z * qb.z)
+    combined.x = (qa.x * qb.w + qa.w * qb.x + qa.y * qb.z - qa.z * qb.y)
+    combined.y = (qa.w * qb.y - qa.x * qb.z + qa.y * qb.w + qa.z * qb.x)
+    combined.z = (qa.w * qb.z + qa.x * qb.y - qa.y * qb.x + qa.z * qb.w)
+    return combined
+
 def rotateQuaternion(q_orig, yaw):
     """
     Converts a basic rotation about the z-axis (in radians) into the

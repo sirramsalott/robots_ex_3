@@ -49,7 +49,7 @@ class FaceDetectionModel:
 
     def getFaceID(self, faceToMatch):
         for studentID, eigenface in self.faceDBCache:
-            if any(fr.compare_faces([faceToMatch], eigenface):
+            if any(fr.compare_faces([faceToMatch], eigenface)):
                 return studentID
 
         return None

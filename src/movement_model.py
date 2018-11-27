@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+
 import math
 
 TRACK_FACE_LEFT = 0.1

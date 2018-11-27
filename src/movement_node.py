@@ -1,17 +1,19 @@
-from enum import Enum
+#! /usr/bin/env python
 
+from enum import Enum
+import sys
 import rospy
 import actionlib
 import face_detection_lib as fd
 import movement_model as mm
-from robots_ex_3.msg import MoveBaseAction, MoveBaseGoal
-from msg import TrackFace, FaceLocked, OccupancyGrid
-from msgs.msg import Empty
-from geometry_msgs.msg import Pose, Quaternion
+from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
+from robots_exercise_3.msg import TrackFace, StudentFaceLocked, NewFaceLocked
+from std_msgs.msg import Empty
+from nav_msgs.msg import OccupancyGrid
+from geometry_msgs.msg import Pose, Quaternion, PoseWithCovarianceStamped
 import sensor_model
 import math
 from util import rotateQuaternion
-import sys
 import random as rand
 
 
@@ -19,6 +21,7 @@ class BaseStates(Enum):
     EXPLORE = 1
     TRACK_FACE = 2
     STILL = 3
+    BOOT = 4 
 
 
 class ExploreStates(Enum):
@@ -38,10 +41,12 @@ class MovementNode:
 
         self.sensor_model = sensor_model.SensorModel()
 
-        self.base_state = BaseStates.EXPLORE
+        self.base_state = BaseStates.BOOT
         self.explore_state = ExploreStates.NO_GOAL
 
         self.face_threshold = 10  # how many pixels either side of the centre are classed as central
+
+        self.pose = Pose()
 
         # Sort out the map
         self.occupancy_map = OccupancyGrid()
@@ -58,12 +63,13 @@ class MovementNode:
         self.set_map(occupancy_map)
 
         # Subscribe to the facial topics
-        self.faceTrackListener = rospy.Subscriber("/track_face", TrackFace, self.faceListener(), queue_size=1)
-        self.faceLockListener = rospy.Subscriber("/face_locked", FaceLocked, self.faceListener(), queue_size=1)
-        self.faceLossListener = rospy.Subscriber("/face_lost", Empty, self.faceListener(), queue_size=1)
+        self.faceTrackListener = rospy.Subscriber("/track_face", TrackFace, self.faceListener, queue_size=1)
+        self.faceLockListener = rospy.Subscriber("/face_locked", StudentFaceLocked, self.faceListener, queue_size=1)
+        self.faceLossListener = rospy.Subscriber("/face_lost", Empty, self.faceListener, queue_size=1) #TODO Check this with Joe
+        self.initialposeListener = rospy.Subscriber("/initialpose", PoseWithCovarianceStamped, self.initialposeListener, queue_size=1)
 
-        self.reactListener = rospy.Subscriber("/movement_react", Empty, self.react(), queue_size=1)
-        self.reactPublisher = rospy.Publisher("/movement_react", Empty)
+        self.reactListener = rospy.Subscriber("/movement_react", Empty, self.react, queue_size=1)
+        self.reactPublisher = rospy.Publisher("/movement_react", Empty, queue_size=1)
 
         # TODO publishers
 
@@ -72,13 +78,15 @@ class MovementNode:
         self.recentFace = None
         self.current_goal = None
 
-        self.trigger()
+	rospy.loginfo("Init complete!")
 
-    def react(self):
+    def react(self, msg):
         """
         Process a single action
         :return:
         """
+        rospy.loginfo("Reacting...")
+        self.print_state()
         if self.base_state == BaseStates.EXPLORE:
             self.explore()
             return
@@ -94,47 +102,57 @@ class MovementNode:
             # TODO leave to callback
             return
 
+    def print_state(self):
+	rospy.loginfo("Base: {}, Explore State: {}".format(self.base_state.name, self.explore_state.name))
+
     def trigger(self):
+        rospy.loginfo("Triggering...")
         self.reactPublisher.publish(Empty())
+
+    def initialposeListener(self, poseMessage):
+	rospy.loginfo("Received initial pose")
+        self.pose = poseMessage
+	self.base_state = BaseStates.EXPLORE
+        self.trigger()
 
     def active_cb(self):
         rospy.loginfo(
-            "Goal pose " + str(self.current_goal.pose.pose) + " is now being processed by the Action Server...")
+            "Goal pose " + str(self.current_goal.target_pose.pose.position) + " is now being processed by the Action Server...")
 
     def feedback_cb(self, feedback):
         # To print current pose at each feedback:
-        rospy.loginfo("Feedback for goal " + str(self.current_goal.pose.pose) + ": " + str(feedback))
+        rospy.loginfo("Feedback for goal " + str(self.current_goal.target_pose.pose.position) + ": " + str(feedback))
 
     def done_cb(self, status, result):
         # Reference for terminal status values: http://docs.ros.org/diamondback/api/actionlib_msgs/html/msg/GoalStatus.html
         if status == 2:
             rospy.loginfo("Goal pose " + str(
-                self.current_goal.pose.pose) + " received a cancel request after it started executing, completed execution!")
+                self.current_goal.target_pose.pose.position) + " received a cancel request after it started executing, completed execution!")
             self.explore_state = ExploreStates.NO_GOAL
             self.trigger()
             return
 
         if status == 3:
-            rospy.loginfo("Goal pose " + str(self.current_goal.pose.pose) + " reached")
+            rospy.loginfo("Goal pose " + str(self.current_goal.target_pose.pose.position) + " reached")
             self.explore_state = ExploreStates.AT_GOAL
             self.trigger()
             return
 
         if status == 4:
-            rospy.loginfo("Goal pose " + str(self.current_goal.pose.pose) + " was aborted by the Action Server")
+            rospy.loginfo("Goal pose " + str(self.current_goal.target_pose.pose.position) + " was aborted by the Action Server")
             self.explore_state = ExploreStates.NO_GOAL
             self.trigger()
             return
 
         if status == 5:
-            rospy.loginfo("Goal pose " + str(self.current_goal.pose.pose) + " has been rejected by the Action Server")
+            rospy.loginfo("Goal pose " + str(self.current_goal.target_pose.pose.position) + " has been rejected by the Action Server")
             self.explore_state = ExploreStates.GOAL_REJECTED
             self.trigger()
             return
 
         if status == 8:
             rospy.loginfo("Goal pose " + str(
-                self.current_goal.pose.pose) + " received a cancel request before it started executing, successfully cancelled!")
+                self.current_goal.target_pose.pose.position) + " received a cancel request before it started executing, successfully cancelled!")
             self.explore_state = ExploreStates.NO_GOAL
             self.trigger()
 
@@ -153,9 +171,6 @@ class MovementNode:
         goal.target_pose.pose = self.next_waypoint()
         self.current_goal = goal
         self.move_client.send_goal(goal, self.done_cb, self.active_cb, self.feedback_cb)
-        print("Spinning...")
-        rospy.spin()
-        print("Passed spin")
 
     def track_face(self):
         """
@@ -220,8 +235,8 @@ class MovementNode:
 
                 world_x, world_y = self.map_coords_to_pose(rand_x, rand_y)
 
-                new_pose.location.x = world_x
-                new_pose.location.y = world_y
+                new_pose.position.x = world_x
+                new_pose.position.y = world_y
 
                 return new_pose
 
@@ -256,11 +271,15 @@ class MovementNode:
     def map_coords_occupied(self, coords):
         (x, y) = coords
         threshold = 80
-        prob_occupied = self.occupancy_map.data[x + y * self.occupancy_map.info.width]
+        prob_occupied = self.occupancy_map.data[int(x + y * self.occupancy_map.info.width)]
 
         return prob_occupied == -1 or prob_occupied > threshold
 
 
 if __name__ == '__main__':
+    rospy.init_node(name="face_detect", log_level=rospy.INFO)
+    rospy.loginfo("Starting movement_node...")
     mv = MovementNode()
-    mv.start()
+    rospy.loginfo("Entering spin...")
+    rospy.spin()
+    #mv.start()
