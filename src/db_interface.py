@@ -57,13 +57,41 @@ class DB_Interface:
         self.c.execute("SELECT name FROM Student WHERE id = ?", (studentID,))
         return self.c.fetchone()
 
+    def getLecturer(self, lecturerID):
+        self.c.execute("""
+                    SELECT name, email FROM Lecturer
+                    WHERE id = ?
+        """, (lecturerID,))
+        return self.c.fetchone()
+
+    def getAbsences(self, lecturerID, time='-3 Hour'):
+        self.c.execute("""
+                    SELECT Missed.studentid, Student.name, Module.name, Module.id, Lecture.id, Lecture.starttime, Lecture.endtime, Lecture.location, Missed.datetime FROM Missed
+                    JOIN Lecture ON Missed.lectureid = Lecture.id
+                    JOIN Student ON Missed.studentid = Student.id
+                    JOIN Module ON Lecture.moduleid = Module.id
+                    WHERE Module.lecturerid = ?
+                    AND Missed.datetime >= datetime('now', ?)
+                    ORDER BY Lecture.id
+        """, (lecturerID,time))
+        return self.c.fetchall()
+
 if __name__ == "__main__":
     # Code to test the database interface 
     db = DB_Interface()
-    print(db.getLectureNameAndLocation(1))
-    print(db.getStudentCurrentLecture(1549223))
     db.storeNewStudent(1549228, 0, "Bob")
     db.storeNewStudent(1549223, 0)
     print(db.getStudentName(1549223))
     print(db.getStudentName(1549228))
     print(db.getNewFaces([]))
+    db.storeAbsence(1549223, 1)
+    db.storeAbsence(1549224, 1)
+    db.storeAbsence(1549225, 1)
+    db.storeAbsence(1549226, 1)
+    db.storeAbsence(1549224, 2)
+    db.storeAbsence(1549223, 3)
+    db.storeAbsence(1549225, 1)
+    db.storeAbsence(1549223, 4)
+    db.storeAbsence(1549223, 5)
+    print('added absences')
+    print(db.getAbsences(1))
