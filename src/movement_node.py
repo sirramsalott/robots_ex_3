@@ -15,6 +15,9 @@ import sensor_model
 import math
 from util import rotateQuaternion
 import random as rand
+import matplotlib.pyplot as plt
+import re
+import numpy as np
 
 
 class BaseStates(Enum):
@@ -53,20 +56,31 @@ class MovementNode:
         rospy.loginfo("Waiting for a map...")
         try:
             occupancy_map = rospy.wait_for_message("/map", OccupancyGrid, 20)
+            available_space = rospy.wait_for_message("/available_space", OccupancyGrid, 20)
         except:
-            rospy.logerr("Problem getting a map. Check that you have a map_server"
+            rospy.logerr("Problem getting maps. Check that you have a map_server"
                          " running: rosrun map_server map_server <mapname> ")
             sys.exit(1)
-        rospy.loginfo("Map received. %d X %d, %f px/m." %
+        rospy.loginfo("Maps received. %d X %d, %f px/m." %
                       (occupancy_map.info.width, occupancy_map.info.height,
                        occupancy_map.info.resolution))
-        self.set_map(occupancy_map)
+        self.set_map(occupancy_map, available_space)
+
+        #available_space_file = rospy.get_param("~available_space_file")
+        #self.available_space = self.load_available_space(available_space_file)
+        #self.visual_space = self.load_available_space(available_space_file)
+
+        #u, c = np.unique(self.available_space, return_counts=True)
+        #rospy.loginfo("{}".format(dict(zip(u, c))))
+        #rospy.loginfo("{}".format(self.occupancy_map.info.width))
 
         # Subscribe to the facial topics
         self.faceTrackListener = rospy.Subscriber("/track_face", TrackFace, self.faceListener, queue_size=1)
         self.faceLockListener = rospy.Subscriber("/face_locked", StudentFaceLocked, self.faceListener, queue_size=1)
         self.faceLossListener = rospy.Subscriber("/face_lost", Empty, self.faceListener, queue_size=1) #TODO Check this with Joe
+
         self.initialposeListener = rospy.Subscriber("/initialpose", PoseWithCovarianceStamped, self.initialposeListener, queue_size=1)
+        self.estimatedposeListener = rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.estimated_pose_listener, queue_size=1)
 
         self.reactListener = rospy.Subscriber("/movement_react", Empty, self.react, queue_size=1)
         self.reactPublisher = rospy.Publisher("/movement_react", Empty, queue_size=1)
@@ -77,6 +91,10 @@ class MovementNode:
 
         self.recentFace = None
         self.current_goal = None
+
+        #plt.ion()
+        #plt.show()
+        #plt.draw(self.visual_space)
 
 	rospy.loginfo("Init complete!")
 
@@ -110,11 +128,19 @@ class MovementNode:
         self.reactPublisher.publish(Empty())
 
     def initialposeListener(self, poseMessage):
-	rospy.loginfo("Received initial pose")
+	rospy.loginfo("Received initial pose!")
         self.pose = poseMessage
 	self.base_state = BaseStates.EXPLORE
         self.trigger()
 
+    def estimated_pose_listener(self, poseMessage):
+        #(x,y) = self.pose_to_map_coords(self.pose)
+        #self.visual_space[x, y] = 0
+        self.pose = poseMessage
+        #(x,y) = self.pose_to_map_coords(self.pose)
+        #self.visual_space[x, y] = 100
+        #self.update_visual_space_plot()	
+	
     def active_cb(self):
         rospy.loginfo(
             "Goal pose " + str(self.current_goal.target_pose.pose.position) + " is now being processed by the Action Server...")
@@ -224,25 +250,24 @@ class MovementNode:
         :return: Random point on the map
         """
         while True:
-            rand_x = rand.uniform(0, self.occupancy_map.info.width - 1)
-            rand_y = rand.uniform(0, self.occupancy_map.info.height - 1)
+            x,y = self.map_coords_to_world(rand.uniform(0, self.occupancy_map.info.width - 1),
+                                           rand.uniform(0, self.occupancy_map.info.height - 1))
+            new_pose = Pose()
+            new_pose.position.x = x
+            new_pose.position.y = y
 
-            if not self.map_coords_occupied((rand_x, rand_y)):
+            if not self.map_pose_occupied(new_pose, self.available_space):
                 rand_a = rand.uniform(0, 2 * math.pi)
-                new_pose = Pose()
                 new_pose.orientation = rotateQuaternion(q_orig=Quaternion(0, 0, 0, 1),
                                                         yaw=rand_a)
 
-                world_x, world_y = self.map_coords_to_pose(rand_x, rand_y)
-
-                new_pose.position.x = world_x
-                new_pose.position.y = world_y
-
+		rospy.loginfo("x: {}, y: {}".format(x, y))
                 return new_pose
 
-    def set_map(self, occupancy_map):
+    def set_map(self, occupancy_map, available_space):
         """ Set the map for localisation """
         self.occupancy_map = occupancy_map
+        self.available_space = available_space
         self.sensor_model.set_map(occupancy_map)
 
     def pose_to_map_coords(self, pose):
@@ -256,7 +281,7 @@ class MovementNode:
 
         return int(math.floor(map_x)), int(math.floor(map_y))
 
-    def map_coords_to_pose(self, map_x, map_y):
+    def map_coords_to_world(self, map_x, map_y):
         x = self.sensor_model.map_resolution * (
                 map_x - self.sensor_model.map_width / 2) + self.sensor_model.map_origin_x
         y = self.sensor_model.map_resolution * (
@@ -264,22 +289,56 @@ class MovementNode:
 
         return x, y
 
-    def map_pose_occupied(self, pose):
+    def map_pose_occupied(self, pose, map_space):
         x, y = self.pose_to_map_coords(pose)
-        return self.map_coords_occupied((x, y))
-
-    def map_coords_occupied(self, coords):
-        (x, y) = coords
         threshold = 80
-        prob_occupied = self.occupancy_map.data[int(x + y * self.occupancy_map.info.width)]
+        prob_occupied = map_space.data[int(x + y * self.occupancy_map.info.width)]
 
         return prob_occupied == -1 or prob_occupied > threshold
 
+#    def pose_space_available(self, pose):
+#        x, y = self.pose_to_map_coords(pose)
+#        return self.space_available_coords((x,y))
+	
+    def map_coords_occupied(self, coords, map_space):
+        (x, y) = coords
+        threshold = 80
+        prob_occupied = map_space.data[int(x + y * self.occupancy_map.info.width)]
+
+        return prob_occupied == -1 or prob_occupied > threshold
+
+#    def space_available_coords(self, coords):
+#        (x, y) = coords
+#        return self.available_space[int(y), int(x)] != 0
+
+#    def load_available_space(self, available_space_file):
+#        
+#        def read_pgm(filename, byteorder='>'):
+#
+#            with open(filename, 'rb') as f:
+#                buffer = f.read()
+#            try:
+#                header, width, height, maxval = re.search(
+#                    b"(^P5\s(?:\s*#.*[\r\n])*"
+#                    b"(\d+)\s(?:\s*#.*[\r\n])*"
+#                    b"(\d+)\s(?:\s*#.*[\r\n])*"
+#                    b"(\d+)\s(?:\s*#.*[\r\n]\s)*)", buffer).groups()
+#            except AttributeError:
+#                raise ValueError("Not a raw PGM file: '%s'" % filename)
+#            return np.frombuffer(buffer,
+#                                    dtype='u1' if int(maxval) < 256 else byteorder+'u2',
+#                                    count=int(width)*int(height),
+#                                    offset=len(header)
+#                                    ).reshape((int(height), int(width)))
+#        return read_pgm(available_space_file)
+
+    def update_visual_space_plot(self):
+        plt.draw(self.visual_space)
 
 if __name__ == '__main__':
     rospy.init_node(name="face_detect", log_level=rospy.INFO)
     rospy.loginfo("Starting movement_node...")
-    mv = MovementNode()
+    mv = MovementNode() 
     rospy.loginfo("Entering spin...")
     rospy.spin()
     #mv.start()

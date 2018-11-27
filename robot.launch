@@ -5,6 +5,8 @@
 
     <node name="rviz" type="rviz" pkg="rviz" args="-d $(find robots_exercise_3)/navigation.rviz" />
 
-    <node name="movement_node" pkg="robots_exercise_3" type="movement_node.py" />
+    <node name="movement_node" pkg="robots_exercise_3" type="movement_node.py">
+	<param name="available_space_file" value="$(find robots_exercise_3)/movement/stage/available_space.pgm" />
+    </node>
 
 </launch>

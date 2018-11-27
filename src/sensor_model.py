@@ -68,7 +68,7 @@ class SensorModel(object):
                              (self.map_width / 2.0) * self.map_resolution)
         self.map_origin_y = (occupancy_map.info.origin.position.y +
                              (self.map_height / 2.0) * self.map_resolution)
-        rospy.loginfo("Sensor model map set.")
+        rospy.loginfo("Sensor model occupancy map set.")
 
     # def calc_map_range(self, ox, oy, oa):
     #     """

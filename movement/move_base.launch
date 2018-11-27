@@ -3,6 +3,9 @@
   <master auto="start"/>
 
   <node name="map_server" pkg="map_server" type="map_server" args="$(find robots_exercise_3)/movement/stage/map.yaml" />
+  <node name="available_space_server" pkg="map_server" type="map_server" args="$(find robots_exercise_3)/movement/stage/available_space.yaml">
+    <remap from="/map" to="/available_space"/>
+  </node>
 
 
   <include file="$(find robots_exercise_3)/movement/amcl.launch" />
