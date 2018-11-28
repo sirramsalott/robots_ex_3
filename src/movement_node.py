@@ -72,8 +72,8 @@ class MovementNode:
 
         # Subscribe to the facial topics
         self.faceTrackListener = rospy.Subscriber("/track_face", TrackFace, self.faceListener, queue_size=1)
-        self.faceLockListener = rospy.Subscriber("/face_locked", StudentFaceLocked, self.faceListener, queue_size=1)
-        self.faceLossListener = rospy.Subscriber("/face_lost", Empty, self.faceListener, queue_size=1)
+        self.faceLockListener = rospy.Subscriber("/face_locked", StudentFaceLocked, self.faceLockListener, queue_size=1)
+        self.faceLossListener = rospy.Subscriber("/face_lost", Empty, self.faceLossListener, queue_size=1)
 
         self.initialposeListener = rospy.Subscriber("/initialpose", PoseWithCovarianceStamped, self.initialposeListener, queue_size=1)
         self.estimatedposeListener = rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.estimated_pose_listener, queue_size=1)
@@ -89,6 +89,7 @@ class MovementNode:
 
         self.recentFace = None
         self.current_goal = None
+        self.goal_handler = None
 
         #plt.ion()
         #plt.show()
@@ -109,7 +110,7 @@ class MovementNode:
 
         if self.explore_state != ExploreStates.NO_GOAL:
             self.explore_state = ExploreStates.NO_GOAL
-            self.move_client.cancelGoal()
+            self.goal_handler.cancel()
 
         if self.base_state == BaseStates.TRACK_FACE:
             # TODO leave to callback
@@ -194,7 +195,7 @@ class MovementNode:
         goal.target_pose.header.stamp = rospy.Time.now()
         goal.target_pose.pose = self.next_waypoint()
         self.current_goal = goal
-        self.move_client.send_goal(goal, self.done_cb, self.active_cb, self.feedback_cb)
+        self.goal_handler = self.move_client.send_goal(goal, self.done_cb, self.active_cb, self.feedback_cb)
 
     def track_face(self):
         """
