@@ -1,0 +1,6 @@
+digraph G {
+"map" -> "odom"[label="Broadcaster: /amcl\nAverage rate: 10.244 Hz\nMost recent transform: 1542478338.043 ( -0.045 sec old)\nBuffer length: 4.881 sec\n"];
+"base_link" -> "map"[label="Broadcaster: /stp_sonar0\nAverage rate: 10.193 Hz\nMost recent transform: 1542478338.081 ( -0.084 sec old)\nBuffer length: 4.905 sec\n"];
+"base_link" -> "laser"[label="Broadcaster: /stp_laser\nAverage rate: 10.193 Hz\nMost recent transform: 1542478338.076 ( -0.078 sec old)\nBuffer length: 4.905 sec\n"];
+"odom" -> "base_link"[label="Broadcaster: /p2os\nAverage rate: 10.200 Hz\nMost recent transform: 1542478337.947 ( 0.051 sec old)\nBuffer length: 4.902 sec\n"];
+}
