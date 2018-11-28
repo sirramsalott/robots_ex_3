@@ -8,13 +8,14 @@ class UIPresenter:
         # (it create SpeechView to match the interface implemented by TextViewTk)
         self.view = view
         self.view.setPresenter(self)
+        self.dbHandle = db.DB_Interface()
 
     def nagStudent(self, studentID):
-        lectureID = db.getStudentCurrentLecture(studentID)
+        lectureID = self.dbHandle.getStudentCurrentLecture(studentID)
 
         if lectureID is not None:
-            db.storeAbsence(studentID, lectureID)
-            lectureName, location = db.getLectureNameAndLocation(lectureID)
+            self.dbHandle.storeAbsence(studentID, lectureID)
+            lectureName, location = self.dbHandle.getLectureNameAndLocation(lectureID)
             self.view.deliverNag(lectureName, location)
 
     def newUser(self, eigenface):
@@ -30,5 +31,5 @@ class UIPresenter:
         if self.cachedEigenface is None:
             self.view.warn("StudentID submitted, but no face cached on presenter")
         else:
-            db.storeNewStudent(studentID, self.cachedEigenface)
+            self.dbHandle.storeNewStudent(studentID, self.cachedEigenface)
             self.cachedEigenface = None

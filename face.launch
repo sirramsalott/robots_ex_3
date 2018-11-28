@@ -1,0 +1,6 @@
+<launch>
+    <include file="$(find astra_launch)/launch/astra_pro.launch" />
+    <node name="face_node"
+	  pkg="robots_exercise_3"
+	  type="face_detection_node.py" />
+</launch>
