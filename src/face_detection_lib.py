@@ -3,6 +3,9 @@ import cv2
 
 import db_interface as db
 
+image_width = 640
+image_height = 480
+
 
 class Face:
     def __init__(self, eigenface, studentID=None):
@@ -19,8 +22,8 @@ class FaceDetectionModel:
         IMG_SCALE = 4.
 
         imgSmall = cv2.resize(img, (0, 0),
-                              fx=1/IMG_SCALE,
-                              fy=1/IMG_SCALE)
+                              fx=1 / IMG_SCALE,
+                              fy=1 / IMG_SCALE)
 
         boundingBoxes = fr.face_locations(imgSmall,
                                           number_of_times_to_upsample=2)
@@ -46,14 +49,14 @@ class FaceDetectionModel:
 
     def getFaceID(self, faceToMatch):
         for studentID, eigenface in self.faceDBCache:
-            if any(fr.compare_faces([faceToMatch], eigenface):
-                   return studentID
+            if any(fr.compare_faces([faceToMatch], eigenface)):
+                return studentID
 
         return None
 
     def faceIsCentred(self, boundingBox, img):
         # expect: bounding box containing a face, image
-        return # whether the camera is sufficiently centred on the face to begin interacting with it
+        return  # whether the camera is sufficiently centred on the face to begin interacting with it
 
     def updateFaceDBCache(self):
         self.faceDBCache += db.getNewFaces(existingStudentIDs=self.faceDBCache)
