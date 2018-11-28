@@ -235,7 +235,7 @@ class MovementNode:
         """
         self.base_state = BaseStates.STILL
 
-    def faceLossListener(self):
+    def faceLossListener(self, msg):
         """
         Return to exploration when the face is lost
         :return:
