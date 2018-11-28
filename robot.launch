@@ -9,4 +9,6 @@
 	<param name="available_space_file" value="$(find robots_exercise_3)/movement/stage/available_space.pgm" />
     </node>
 
+    <include file="$(find robots_exercise_3)/face.launch" />
+
 </launch>
