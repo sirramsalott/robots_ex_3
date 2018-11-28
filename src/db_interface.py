@@ -37,6 +37,11 @@ class DB_Interface:
                     """, (lectureID,))   
         return self.c.fetchone()
 
+    def getLectureInfo(self, lectureID):
+        self.c.execute("""
+                    SELECT Module.name, 
+        """)
+
     def storeNewStudent(self, studentID, eigenface, name=None):
         # Store a new student, with their face, in the DB
         self.c.execute("INSERT OR IGNORE INTO Student(id, eigenface) VALUES (?,?)", (studentID, eigenface))
@@ -74,6 +79,16 @@ class DB_Interface:
                     AND Missed.datetime >= datetime('now', ?)
                     ORDER BY Lecture.id
         """, (lecturerID,time))
+        return self.c.fetchall()
+
+    def getLectureAbsences(self, lectureID):
+        # Return the students recorded as absent from a specified lecture within the last week.
+        self.c.execute("""
+                    SELECT Missed.studentid, Student.name, Missed.datetime FROM Missed
+                    JOIN Student ON Missed.studentid = Student.id
+                    WHERE Missed.lectureid = ?
+                    AND Missed.datetime >= datetime('now', '-7 Day')
+        """, (lectureID,))
         return self.c.fetchall()
 
 if __name__ == "__main__":
