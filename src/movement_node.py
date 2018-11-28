@@ -113,7 +113,7 @@ class MovementNode:
             self.goal_handler.cancel()
 
         if self.base_state == BaseStates.TRACK_FACE:
-            # TODO leave to callback
+            self.track_face()
             return
         if self.base_state == BaseStates.STILL:
             # TODO leave to callback
@@ -202,7 +202,7 @@ class MovementNode:
         Move according to the most recent face message
         :return:
         """
-
+        rospy.loginfo("face_track executing...")
         face = self.recentFace
         x_centre = face.left + face.right / 2
         img_x_centre = fd.image_width / 2
@@ -213,6 +213,7 @@ class MovementNode:
             move.angular.z = mm.TRACK_FACE_LEFT
         elif x_centre > img_x_centre + self.face_threshold:
             move.angular.z = mm.TRACK_FACE_RIGHT
+	rospy.loginfo("Moving x:{} z:{} ...".format(move.linear.x, move.angular.z))
         self.movePublisher.publish(move)
 
     def faceListener(self, face):
@@ -220,12 +221,12 @@ class MovementNode:
         Move according to the received facial data
         :return:
         """
-
+	rospy.loginfo("Track face received!")
+        self.recentFace = face
         if self.base_state == BaseStates.EXPLORE:
             self.base_state = BaseStates.TRACK_FACE
             self.trigger()
-
-        self.recentFace = face
+            return
         self.track_face()
 
     def faceLockListener(self, face):
@@ -233,6 +234,7 @@ class MovementNode:
         Stand still when the face is locked
         :return:
         """
+	rospy.loginfo("Face lock received!")
         self.base_state = BaseStates.STILL
 
     def faceLossListener(self, msg):
@@ -240,6 +242,7 @@ class MovementNode:
         Return to exploration when the face is lost
         :return:
         """
+	rospy.loginfo("Face loss received!")
         self.base_state = BaseStates.EXPLORE
         self.trigger()
 
