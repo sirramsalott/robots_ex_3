@@ -10,7 +10,7 @@ from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from robots_exercise_3.msg import TrackFace, StudentFaceLocked, NewFaceLocked
 from std_msgs.msg import Empty
 from nav_msgs.msg import OccupancyGrid
-from geometry_msgs.msg import Pose, Quaternion, PoseWithCovarianceStamped
+from geometry_msgs.msg import Pose, Quaternion, PoseWithCovarianceStamped, Twist
 import sensor_model
 import math
 from util import rotateQuaternion
@@ -70,17 +70,15 @@ class MovementNode:
         #self.available_space = self.load_available_space(available_space_file)
         #self.visual_space = self.load_available_space(available_space_file)
 
-        #u, c = np.unique(self.available_space, return_counts=True)
-        #rospy.loginfo("{}".format(dict(zip(u, c))))
-        #rospy.loginfo("{}".format(self.occupancy_map.info.width))
-
         # Subscribe to the facial topics
         self.faceTrackListener = rospy.Subscriber("/track_face", TrackFace, self.faceListener, queue_size=1)
         self.faceLockListener = rospy.Subscriber("/face_locked", StudentFaceLocked, self.faceListener, queue_size=1)
-        self.faceLossListener = rospy.Subscriber("/face_lost", Empty, self.faceListener, queue_size=1) #TODO Check this with Joe
+        self.faceLossListener = rospy.Subscriber("/face_lost", Empty, self.faceListener, queue_size=1)
 
         self.initialposeListener = rospy.Subscriber("/initialpose", PoseWithCovarianceStamped, self.initialposeListener, queue_size=1)
         self.estimatedposeListener = rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.estimated_pose_listener, queue_size=1)
+
+        self.movePublisher = rospy.Publisher("/cmd_vel", Twist, queue_size=1)
 
         self.reactListener = rospy.Subscriber("/movement_react", Empty, self.react, queue_size=1)
         self.reactPublisher = rospy.Publisher("/movement_react", Empty, queue_size=1)
@@ -208,13 +206,13 @@ class MovementNode:
         x_centre = face.left + face.right / 2
         img_x_centre = fd.image_width / 2
 
+	move = Twist()
+        move.linear.x = mm.TRACK_FACE_FORWARD
         if x_centre < img_x_centre - self.face_threshold:
-            pass  # TODO spin left
+            move.angular.z = mm.TRACK_FACE_LEFT
         elif x_centre > img_x_centre + self.face_threshold:
-            pass  # TODO spin right
-
-        # TODO move forward
-        return
+            move.angular.z = mm.TRACK_FACE_RIGHT
+        self.movePublisher.publish(move)
 
     def faceListener(self, face):
         """
