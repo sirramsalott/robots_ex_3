@@ -16,7 +16,7 @@ class FaceHandler:
     MODE_TRACKING = 1
     MODE_LOCKED = 2
     FRAME_RATE = 10
-    FACE_LOST_THRESHOLD = 3
+    FACE_LOST_THRESHOLD = 10
     
     def __init__(self):
         self.framesSinceLastFace = 0
@@ -30,6 +30,7 @@ class FaceHandler:
         self.studentFaceLockedPub = rospy.Publisher("student_face_locked", StudentFaceLocked, queue_size=1)
         self.newFaceLockedPub = rospy.Publisher("new_face_locked", NewFaceLocked, queue_size=1)
         self.faceLostPub = rospy.Publisher("face_lost", Empty, queue_size=1)
+        self.facePendPub = rospy.Publisher("face_pend", Empty, queue_size=1)
 
         self.imageSub = rospy.Subscriber("/usb_cam/image_raw", Image, self.imageCallback, queue_size=1)
         self.interactionCompleteSub = rospy.Subscriber("interaction_complete", Empty, self.completeCallback, queue_size=1)
@@ -116,8 +117,9 @@ class FaceHandler:
 
     def faceLost(self):
         self.framesSinceLastFace += 1
-
-        if self.framesSinceLastFace > self.FACE_LOST_THRESHOLD:
+        if self.framesSinceLastFace <= self.FACE_LOST_THRESHOLD:
+            self.publishFacePend()
+        else:
             self.publishFaceLost()
             self.mode = self.MODE_SCANNING
             self.trackingFace = None
@@ -143,6 +145,9 @@ class FaceHandler:
 
     def publishFaceLost(self):
         self.faceLostPub.publish(Empty())
+
+    def publishFacePend(self):
+        self.facePendPub.publish(Empty())
 
     def drawBoundingBox(self, img, box, colour):
         top, right, bottom, left = box
