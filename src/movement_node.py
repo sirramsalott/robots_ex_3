@@ -144,39 +144,40 @@ class MovementNode:
 
     def feedback_cb(self, feedback):
         # To print current pose at each feedback:
-        rospy.loginfo("Feedback for goal " + str(self.current_goal.target_pose.pose.position) + ": " + str(feedback))
+        p = self.current_goal.target_pose.pose.position
+        rospy.loginfo("Feedback for goal ({}, {}): {}".format(p.x, p.y, feedback))
 
     def done_cb(self, status, result):
         # Reference for terminal status values: http://docs.ros.org/diamondback/api/actionlib_msgs/html/msg/GoalStatus.html
-        with self.current_goal.target_pose.pose.position as p:
-            if status == 2:
-                rospy.loginfo("Goal pose ({}, {}) received a cancel request after it started executing, completed execution!".format(p.x, p.y))
-                self.explore_state = ExploreStates.NO_GOAL
-                self.trigger()
-                return
+        p = self.current_goal.target_pose.pose.position
+        if status == 2:
+            rospy.loginfo("Goal pose ({}, {}) received a cancel request after it started executing, completed execution!".format(p.x, p.y))
+            self.explore_state = ExploreStates.NO_GOAL
+            self.trigger()
+            return
+
+        if status == 3:
+            rospy.loginfo("Goal pose ({}, {}) reached".format(p.x, p.y))
+            self.explore_state = ExploreStates.AT_GOAL
+            self.trigger()
+            return
     
-            if status == 3:
-                rospy.loginfo("Goal pose ({}, {}) reached".format(p.x, p.y))
-                self.explore_state = ExploreStates.AT_GOAL
-                self.trigger()
-                return
+        if status == 4:
+            rospy.loginfo("Goal pose ({}, {}) was aborted by the Action Server".format(p.x, p.y))
+            self.explore_state = ExploreStates.NO_GOAL
+            self.trigger()
+            return
     
-            if status == 4:
-                rospy.loginfo("Goal pose ({}, {}) was aborted by the Action Server".format(p.x, p.y))
-                self.explore_state = ExploreStates.NO_GOAL
-                self.trigger()
-                return
+        if status == 5:
+            rospy.loginfo("Goal pose ({}, {}) has been rejected by the Action Server".format(p.x, p.y))
+            self.explore_state = ExploreStates.GOAL_REJECTED
+            self.trigger()
+            return
     
-            if status == 5:
-                rospy.loginfo("Goal pose ({}, {}) has been rejected by the Action Server".format(p.x, p.y))
-                self.explore_state = ExploreStates.GOAL_REJECTED
-                self.trigger()
-                return
-    
-            if status == 8:
-                rospy.loginfo("Goal pose ({}, {}) received a cancel request before it started executing, successfully cancelled!".format(p.x, p.y))
-                self.explore_state = ExploreStates.NO_GOAL
-                self.trigger()
+        if status == 8:
+            rospy.loginfo("Goal pose ({}, {}) received a cancel request before it started executing, successfully cancelled!".format(p.x, p.y))
+            self.explore_state = ExploreStates.NO_GOAL
+            self.trigger()
 
     def explore(self):
         """
@@ -263,7 +264,7 @@ class MovementNode:
 		rospy.loginfo("x: {}, y: {}".format(x, y))
                 return new_pose
 
-    def set_map(self, occupancy_available, map_space):
+    def set_map(self, occupancy_map, available_space):
         """ Set the map for localisation """
         self.occupancy_map = occupancy_map
         self.available_space = available_space
