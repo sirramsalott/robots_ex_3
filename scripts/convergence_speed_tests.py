@@ -27,51 +27,52 @@ def timeit(method):
     return timed
 
 @timeit
-def multi_var():
-    x = np.linspace(0, size, num=size)
-    y = np.linspace(0, size, num=size)
+def multi_var(a):
+    x = np.linspace(0, a, num=a)
+    y = np.linspace(0, a, num=a)
     X, Y = np.meshgrid(x, y)
     p = np.dstack((X, Y))
-    m = np.ones((size, size))
+    m = np.ones((a, a))
     for x in range(num_trials):
-        a = multivariate_normal([pos, pos], [[var,0],[0, var]])
-        m = (m * e) + a.pdf(p)
-    #plt.imshow(a.pdf(p), cmap='hot', interpolation='nearest')
-    #plt.show()
+        ar = multivariate_normal([int(a/2), int(a/2)], [[var,0],[0, var]])
+        m = (m * e) + ar.pdf(p)
 
 @timeit
-def test_iter():
-    a = multivariate_normal.pdf(np.linspace(0, count - 1, num=count), mean=(count - 1) / 2, cov=var)
+def test_iter(x):
+    a = multivariate_normal.pdf(np.linspace(0, x - 1, num=x), mean=(x - 1) / 2, cov=var)
     b = (np.array(a)[np.newaxis]).T.dot((np.array(a)[np.newaxis]))
-    c = b / b.sum()    
     m = np.ones((size, size))
-    
     for n in range(num_trials):
-    
         m = m * e
-    
-        for i in range(0, count):
-            for j in range(0, count):
-                m[pos + i][pos + j] = min(m[pos+i][pos+j] + c[i][j] * e, 1)
-    
-    #plt.imshow(m, cmap='hot', interpolation='nearest')
-    #plt.show()
+        for i in range(0, x):
+            for j in range(0, x):
+                m[i][j] = min(m[i][j] + b[i][j] * e, 1)
     
 @timeit
-def test_block():
-
+def test_block(x):
+    m = np.ones((x, x))
     for i in range(num_trials):
-        a = multivariate_normal.pdf(np.linspace(0, size, num=size), mean=pos, cov=var)
+        a = multivariate_normal.pdf(np.linspace(0, x, num=x), mean=int(x/2), cov=var)
         b = (np.array(a)[np.newaxis]).T.dot((np.array(a)[np.newaxis]))
-        c = b / b.sum()    
-        m = np.ones((size, size))
-        
-        m = (m * e) + c
-    
-    #plt.imshow(m, cmap='hot', interpolation='nearest')
-    #plt.show()
+        m = (m * e) + b
 
 if __name__ == '__main__':
-    multi_var()
-    test_iter()
-    test_block()
+    times = []
+    t = range(10, 15)
+    for i in t:
+        s = time.time()    
+        test_iter(int(i))
+        e = time.time()
+        a = e - s
+        s = time.time()
+        multi_var(int(i))
+        e = time.time()
+        b = e - s
+        s = time.time()
+        test_block(int(i))
+        e = time.time()
+        c = e - s
+        times.append([a, b, c])
+    labels = plt.plot(t, times)
+    plt.legend(labels, ['1', '2', '3'])
+    plt.show()

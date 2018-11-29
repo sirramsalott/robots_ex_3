@@ -18,7 +18,7 @@ import random as rand
 import matplotlib.pyplot as plt
 import re
 import numpy as np
-
+from explorer import Explorer
 
 class BaseStates(Enum):
     EXPLORE = 1
