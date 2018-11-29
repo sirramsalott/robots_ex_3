@@ -16,8 +16,10 @@ class FaceHandler:
     MODE_TRACKING = 1
     MODE_LOCKED = 2
     FRAME_RATE = 10
+    FACE_LOST_THRESHOLD = 3
     
     def __init__(self):
+        self.framesSinceLastFace = 0
         self.mode = self.MODE_SCANNING
         self.trackingFace = None
         self.framesReceived = 0
@@ -113,9 +115,13 @@ class FaceHandler:
         return img
 
     def faceLost(self):
-        self.publishFaceLost()
-        self.mode = self.MODE_SCANNING
-        self.trackingFace = None
+        self.framesSinceLastFace += 1
+
+        if self.framesSinceLastFace > self.FACE_LOST_THRESHOLD:
+            self.publishFaceLost()
+            self.mode = self.MODE_SCANNING
+            self.trackingFace = None
+            self.framesSinceLastFace = 0
 
     def publishTrackFace(self, boundingBox):
         trackFaceMsg = TrackFace()
