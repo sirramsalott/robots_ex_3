@@ -23,8 +23,9 @@ from explorer import Explorer
 class BaseStates(Enum):
     EXPLORE = 1
     TRACK_FACE = 2
-    STILL = 3
-    BOOT = 4 
+    TRACK_LOSS = 3
+    STILL = 4
+    BOOT = 5
 
 
 class ExploreStates(Enum):
@@ -66,14 +67,11 @@ class MovementNode:
                        occupancy_map.info.resolution))
         self.set_map(occupancy_map, available_space)
 
-        #available_space_file = rospy.get_param("~available_space_file")
-        #self.available_space = self.load_available_space(available_space_file)
-        #self.visual_space = self.load_available_space(available_space_file)
-
         # Subscribe to the facial topics
         self.faceTrackListener = rospy.Subscriber("/track_face", TrackFace, self.faceListener, queue_size=1)
-        self.faceLockListener = rospy.Subscriber("/face_locked", StudentFaceLocked, self.faceListener, queue_size=1)
-        self.faceLossListener = rospy.Subscriber("/face_lost", Empty, self.faceListener, queue_size=1)
+        self.faceLockListener = rospy.Subscriber("/face_locked", StudentFaceLocked, self.faceLockListener, queue_size=1)
+        self.faceLossListener = rospy.Subscriber("/face_lost", Empty, self.faceLossListener, queue_size=1)
+        self.facePendListener = rospy.Subscriber("/face_pend", Empty, self.facePendListener, queue_size=1)
 
         self.initialposeListener = rospy.Subscriber("/initialpose", PoseWithCovarianceStamped, self.initialposeListener, queue_size=1)
         self.estimatedposeListener = rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.estimated_pose_listener, queue_size=1)
@@ -89,10 +87,7 @@ class MovementNode:
 
         self.recentFace = None
         self.current_goal = None
-
-        #plt.ion()
-        #plt.show()
-        #plt.draw(self.visual_space)
+        self.goal_handler = None
 
 	rospy.loginfo("Init complete!")
 
@@ -109,14 +104,20 @@ class MovementNode:
 
         if self.explore_state != ExploreStates.NO_GOAL:
             self.explore_state = ExploreStates.NO_GOAL
-            self.move_client.cancelGoal()
+            rospy.loginfo("Cancelling current goal...")
+            self.move_client.cancel_all_goals()
+            rospy.loginfo("Cancelled!")
 
         if self.base_state == BaseStates.TRACK_FACE:
-            # TODO leave to callback
+            self.track_face(True)
             return
+
+        if self.base_state == BaseStates.TRACK_LOSS:
+            self.track_face(False)
+            return
+
         if self.base_state == BaseStates.STILL:
-            # TODO leave to callback
-            return
+            self.track_face(False)
 
     def print_state(self):
 	rospy.loginfo("Base: {}, Explore State: {}".format(self.base_state.name, self.explore_state.name))
@@ -132,51 +133,47 @@ class MovementNode:
         self.trigger()
 
     def estimated_pose_listener(self, poseMessage):
-        #(x,y) = self.pose_to_map_coords(self.pose)
-        #self.visual_space[x, y] = 0
         self.pose = poseMessage
-        #(x,y) = self.pose_to_map_coords(self.pose)
-        #self.visual_space[x, y] = 100
-        #self.update_visual_space_plot()	
 	
     def active_cb(self):
+        p = self.current_goal.target_pose.pose.position
         rospy.loginfo(
-            "Goal pose " + str(self.current_goal.target_pose.pose.position) + " is now being processed by the Action Server...")
+            "Goal pose ({}, {}) is now being processed by the Action Server...".format(p.x, p.y))
 
     def feedback_cb(self, feedback):
         # To print current pose at each feedback:
-        rospy.loginfo("Feedback for goal " + str(self.current_goal.target_pose.pose.position) + ": " + str(feedback))
+        p = self.current_goal.target_pose.pose.position
+        #rospy.loginfo("Feedback for goal ({}, {})".format(p.x, p.y))
 
     def done_cb(self, status, result):
         # Reference for terminal status values: http://docs.ros.org/diamondback/api/actionlib_msgs/html/msg/GoalStatus.html
+        p = self.current_goal.target_pose.pose.position
         if status == 2:
-            rospy.loginfo("Goal pose " + str(
-                self.current_goal.target_pose.pose.position) + " received a cancel request after it started executing, completed execution!")
+            rospy.loginfo("Goal pose ({}, {}) received a cancel request after it started executing, completed execution!".format(p.x, p.y))
             self.explore_state = ExploreStates.NO_GOAL
             self.trigger()
             return
 
         if status == 3:
-            rospy.loginfo("Goal pose " + str(self.current_goal.target_pose.pose.position) + " reached")
+            rospy.loginfo("Goal pose ({}, {}) reached".format(p.x, p.y))
             self.explore_state = ExploreStates.AT_GOAL
             self.trigger()
             return
-
+    
         if status == 4:
-            rospy.loginfo("Goal pose " + str(self.current_goal.target_pose.pose.position) + " was aborted by the Action Server")
+            rospy.loginfo("Goal pose ({}, {}) was aborted by the Action Server".format(p.x, p.y))
             self.explore_state = ExploreStates.NO_GOAL
             self.trigger()
             return
-
+    
         if status == 5:
-            rospy.loginfo("Goal pose " + str(self.current_goal.target_pose.pose.position) + " has been rejected by the Action Server")
+            rospy.loginfo("Goal pose ({}, {}) has been rejected by the Action Server".format(p.x, p.y))
             self.explore_state = ExploreStates.GOAL_REJECTED
             self.trigger()
             return
-
+    
         if status == 8:
-            rospy.loginfo("Goal pose " + str(
-                self.current_goal.target_pose.pose.position) + " received a cancel request before it started executing, successfully cancelled!")
+            rospy.loginfo("Goal pose ({}, {}) received a cancel request before it started executing, successfully cancelled!".format(p.x, p.y))
             self.explore_state = ExploreStates.NO_GOAL
             self.trigger()
 
@@ -193,25 +190,31 @@ class MovementNode:
         goal.target_pose.header.frame_id = "/map"
         goal.target_pose.header.stamp = rospy.Time.now()
         goal.target_pose.pose = self.next_waypoint()
+        self.goal_handler = self.move_client.send_goal(goal, self.done_cb, self.active_cb, self.feedback_cb)
         self.current_goal = goal
-        self.move_client.send_goal(goal, self.done_cb, self.active_cb, self.feedback_cb)
+        self.explore_state = ExploreStates.MOVE_TO_GOAL
 
-    def track_face(self):
+    def track_face(self, forward):
         """
         Move according to the most recent face message
         :return:
         """
-
+        rospy.loginfo("track_face executing...")
         face = self.recentFace
         x_centre = face.left + face.right / 2
         img_x_centre = fd.image_width / 2
+	rospy.loginfo("Face centre: {}, img centre: {}".format(x_centre, img_x_centre))
 
 	move = Twist()
-        move.linear.x = mm.TRACK_FACE_FORWARD
+        if forward:
+            move.linear.x = mm.TRACK_FACE_FORWARD
+        else:
+            move.linear.x = 0
         if x_centre < img_x_centre - self.face_threshold:
             move.angular.z = mm.TRACK_FACE_LEFT
         elif x_centre > img_x_centre + self.face_threshold:
             move.angular.z = mm.TRACK_FACE_RIGHT
+	rospy.loginfo("Moving x:{} z:{} ...".format(move.linear.x, move.angular.z))
         self.movePublisher.publish(move)
 
     def faceListener(self, face):
@@ -219,26 +222,35 @@ class MovementNode:
         Move according to the received facial data
         :return:
         """
-
-        if self.base_state == BaseStates.EXPLORE:
-            self.base_state = BaseStates.TRACK_FACE
-            self.trigger()
-
+	rospy.loginfo("Track face received!")
         self.recentFace = face
-        self.track_face()
-
+        self.base_state = BaseStates.TRACK_FACE
+        self.trigger()
+        
     def faceLockListener(self, face):
         """
         Stand still when the face is locked
         :return:
         """
+	rospy.loginfo("Face lock received!")
+        self.recentFace = face
         self.base_state = BaseStates.STILL
+        self.trigger()
 
-    def faceLossListener(self):
+    def facePendListener(self, msg):
+        """
+        Keep tracking but don't move forward
+        """
+        rospy.loginfo("Face pend received!")
+        self.base_state = BaseStates.TRACK_LOSS
+        self.trigger()
+
+    def faceLossListener(self, msg):
         """
         Return to exploration when the face is lost
         :return:
         """
+	rospy.loginfo("Face loss received!")
         self.base_state = BaseStates.EXPLORE
         self.trigger()
 
@@ -293,10 +305,6 @@ class MovementNode:
         prob_occupied = map_space.data[int(x + y * self.occupancy_map.info.width)]
 
         return prob_occupied == -1 or prob_occupied > threshold
-
-#    def pose_space_available(self, pose):
-#        x, y = self.pose_to_map_coords(pose)
-#        return self.space_available_coords((x,y))
 	
     def map_coords_occupied(self, coords, map_space):
         (x, y) = coords
@@ -304,31 +312,6 @@ class MovementNode:
         prob_occupied = map_space.data[int(x + y * self.occupancy_map.info.width)]
 
         return prob_occupied == -1 or prob_occupied > threshold
-
-#    def space_available_coords(self, coords):
-#        (x, y) = coords
-#        return self.available_space[int(y), int(x)] != 0
-
-#    def load_available_space(self, available_space_file):
-#        
-#        def read_pgm(filename, byteorder='>'):
-#
-#            with open(filename, 'rb') as f:
-#                buffer = f.read()
-#            try:
-#                header, width, height, maxval = re.search(
-#                    b"(^P5\s(?:\s*#.*[\r\n])*"
-#                    b"(\d+)\s(?:\s*#.*[\r\n])*"
-#                    b"(\d+)\s(?:\s*#.*[\r\n])*"
-#                    b"(\d+)\s(?:\s*#.*[\r\n]\s)*)", buffer).groups()
-#            except AttributeError:
-#                raise ValueError("Not a raw PGM file: '%s'" % filename)
-#            return np.frombuffer(buffer,
-#                                    dtype='u1' if int(maxval) < 256 else byteorder+'u2',
-#                                    count=int(width)*int(height),
-#                                    offset=len(header)
-#                                    ).reshape((int(height), int(width)))
-#        return read_pgm(available_space_file)
 
     def update_visual_space_plot(self):
         plt.draw(self.visual_space)

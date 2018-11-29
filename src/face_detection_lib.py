@@ -15,6 +15,8 @@ class Face:
 
 class FaceDetectionModel:
     def __init__(self):
+        self.dbHandle = db.DB_Interface()
+
         self.faceDBCache = []
         self.faceDBCache = self.updateFaceDBCache()
 
@@ -59,4 +61,4 @@ class FaceDetectionModel:
         return  # whether the camera is sufficiently centred on the face to begin interacting with it
 
     def updateFaceDBCache(self):
-        self.faceDBCache += db.getNewFaces(existingStudentIDs=self.faceDBCache)
+        self.faceDBCache += self.dbHandle.getNewFaces(existingStudentIDs=self.faceDBCache)

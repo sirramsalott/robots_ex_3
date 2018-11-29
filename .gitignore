@@ -4,3 +4,7 @@
 *.swo
 *.swp
 .idea/
+venv
+database.db
+settings.json
+.gitignore
