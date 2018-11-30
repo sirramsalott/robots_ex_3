@@ -1,5 +1,5 @@
 """
-sensor_model.py
+map_model.py
 Provides a SensorModel class to calculate particle weights.
 """
 import rospy
@@ -8,65 +8,25 @@ import math
 PI_OVER_TWO = math.pi / 2
 
 
-class SensorModel(object):
+class MapModel(object):
 
-    # def __init__(self):
-    #     # Parameters for particle weight calculation
-    #     self.z_hit = 0.95 		# Default probability if we make a hit
-    #     self.z_short = 0.1 	# Probability of a short reading from
-    #                            # unexpected obstacle (e.g. person or object)
-    #     self.z_max = 0.05 		# Probability of failure to detect an obstacle,
-    #                            # reported as max range
-    #     self.z_rand = 0.05 	# Random noise on all readings
-    #
-    #     self.sigma_hit = 0.2 		# Noise on hit
-    #     self.lambda_short = 0.1 	# Noise on short reading
-    #
-    #     # Initialise scan parameters to nothing
-    #     self.set_laser_scan_parameters(0, 0, 0, 0, 0)
-    #
-    # def set_laser_scan_parameters(self,num_readings, scan_range_max,
-    #                               scan_length, scan_angle_min,
-    #                               scan_angle_max ):
-    #     """
-    #     Set the parameters for laser scanner that this instance is modeling
-    #
-    #     :Args:
-    #         | num_readings (int): Number of scan readings to be compared with
-    #                               predictions when computing particle weights
-    #         | scan_range_max (double): Max range scanner can read
-    #         | scan_length (int) : The number of readings in a complete scan
-    #         | scan_angle_min (double): The min. angle of the scanner
-    #         | scan_angle_max (double): The max. angle of the scanner
-    #     """
-    #     # Laser parameters
-    #     self.scan_range_max = scan_range_max
-    #
-    #     # What points to sample the laser at when calculating particle weight
-    #     reading_step = (scan_length - 1) / (num_readings - 1)
-    #     self.reading_points = [(i, scan_angle_min +
-    #                             ((scan_angle_max - scan_angle_min) *
-    #                              (float(i) / scan_length)))
-    #                            for i in range(0, scan_length, reading_step)]
-    #
-    #     rospy.loginfo("Sensor model scan parameters set.")
-
-    def set_map(self, occupancy_map):
+    def __init__(self, provided_map):
         """
         Set the map that this model should use when calculating expected
         laser readings.
         
         :Args:
-            | occupancy_map (sensor_msgs.msg.OccupancyGrid): the map to use
+            | provided_map (sensor_msgs.msg.OccupancyGrid): the map to use
         """
         # Map data
-        self.map_width = occupancy_map.info.width
-        self.map_height = occupancy_map.info.height
-        self.map_resolution = occupancy_map.info.resolution  # in m per pixel
-        self.map_data = occupancy_map.data
-        self.map_origin_x = (occupancy_map.info.origin.position.x +
+        self.occupancy = provided_map
+        self.map_width = provided_map.info.width
+        self.map_height = provided_map.info.height
+        self.map_resolution = provided_map.info.resolution  # in m per pixel
+        self.map_data = provided_map.data
+        self.map_origin_x = (provided_map.info.origin.position.x +
                              (self.map_width / 2.0) * self.map_resolution)
-        self.map_origin_y = (occupancy_map.info.origin.position.y +
+        self.map_origin_y = (provided_map.info.origin.position.y +
                              (self.map_height / 2.0) * self.map_resolution)
         rospy.loginfo("Sensor model occupancy map set.")
 

@@ -1,8 +1,13 @@
+import math
+
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import multivariate_normal
 from geometry_msgs.msg import Pose
 import movement_model as mm
+import util
+import random as rand
+
 
 class Explorer:
 
@@ -67,3 +72,24 @@ class Explorer:
 
         return normalise(read_pgm(map_file))
    
+    def next_waypoint(self, avail_space_model):
+        """
+        Determine the next waypoint to navigate to
+        :param: avail_space_model: The space model from which to select a waypoint
+        :return: Random point on the map
+        """
+        while True:
+            x, y = util.map_coords_to_world(rand.uniform(0, avail_space_model.map_width - 1),
+                                            rand.uniform(0, avail_space_model.map_height - 1),
+                                            self.avail_space_model)
+            new_pose = Pose()
+            new_pose.position.x = x
+            new_pose.position.y = y
+
+            if not util.map_pose_occupied(new_pose, self.avail_space_model):
+                rand_a = rand.uniform(0, 2 * math.pi)
+                new_pose.orientation = util.rotateQuaternion(q_orig=Quaternion(0, 0, 0, 1),
+                                                             yaw=rand_a)
+
+                rospy.loginfo("x: {}, y: {}".format(x, y))
+                return new_pose
