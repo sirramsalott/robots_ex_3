@@ -1,5 +1,8 @@
 <launch>
 
+    <arg name="visualise" default="true" doc="false if visual tools should be loaded" />
+    <param name="visualise" value="$(arg visualise)" />
+
     <include file="$(find robots_exercise_3)/movement.launch" />
 
     <include file="$(find robots_exercise_3)/face.launch" />

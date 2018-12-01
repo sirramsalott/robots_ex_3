@@ -19,10 +19,12 @@ class FaceHandler:
     FACE_LOST_THRESHOLD = 10
     
     def __init__(self):
-        self.framesSinceLastFace = 0
+        self.framesSinceLastFace = self.FACE_LOST_THRESHOLD + 1
         self.mode = self.MODE_SCANNING
         self.trackingFace = None
         self.framesReceived = 0
+
+        self.visualise = rospy.get_param("/visualise")
 
         self.fdm = FaceDetectionModel()
 
@@ -56,8 +58,9 @@ class FaceHandler:
             elif self.mode == self.MODE_LOCKED:
                 img = self.lockedMode(img)
 
-            cv2.imshow("Camera Stream", img)
-            cv2.waitKey(1)
+            if self.visualise:
+                cv2.imshow("Camera Stream", img)
+                cv2.waitKey(1)
 
     def newFaceCallback(self):
         self.fdm.updateFaceDBCache()

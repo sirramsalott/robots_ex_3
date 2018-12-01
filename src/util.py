@@ -93,7 +93,7 @@ def map_coords_occupied(coords, map_model):
     """
     (x, y) = coords
     threshold = 80
-    prob_occupied = map_model.data[int(x + y * map_model.occupancy.info.width)]
+    prob_occupied = map_model.occupancy.data[int(x + y * map_model.occupancy.info.width)]
     return prob_occupied == -1 or prob_occupied > threshold
 
 

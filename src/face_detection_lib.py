@@ -6,6 +6,7 @@ import db_interface as db
 image_width = 640
 image_height = 480
 
+LOCK_THRESHOLD = 0.7
 
 class Face:
     def __init__(self, eigenface, studentID=None):
@@ -57,8 +58,9 @@ class FaceDetectionModel:
         return None
 
     def faceIsCentred(self, boundingBox, img):
-        # expect: bounding box containing a face, image
-        return  # whether the camera is sufficiently centred on the face to begin interacting with it
+	box_height = bounding_box.bottom - bounding_box.top
+        return (box_height / image_height) >= FACE_THRESHOLD
 
     def updateFaceDBCache(self):
-        self.faceDBCache += self.dbHandle.getNewFaces(existingStudentIDs=self.faceDBCache)
+        pass
+        #self.faceDBCache += self.dbHandle.getNewFaces(existingStudentIDs=self.faceDBCache)
