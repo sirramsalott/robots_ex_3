@@ -72,10 +72,10 @@ class MovementNode:
                        occupancy_map.info.resolution))
 
         # Create the map models from the received maps
-        self.occ_map_model = map_model.MapModel()
-        self.occ_map_model.set_map(occupancy_map)
-        self.avail_space_model = map_model.MapModel()
-        self.avail_space_model.set_map(available_space)
+        self.occ_map_model = map_model.MapModel(occupancy_map)
+        self.avail_space_model = map_model.MapModel(available_space)
+
+        self.explorer = explorer.Explorer(self.avail_space_model)
 
         # Subscribe to the facial topics
         self.faceTrackListener = rospy.Subscriber("/track_face", TrackFace, self.face_listener, queue_size=1)
@@ -100,8 +100,6 @@ class MovementNode:
         self.recent_face = None
         self.current_goal = None
         self.goal_handler = None
-
-        self.explorer = explorer.Explorer()
 
         rospy.loginfo("Init complete!")
 
@@ -240,7 +238,7 @@ class MovementNode:
         goal = MoveBaseGoal()
         goal.target_pose.header.frame_id = "/map"
         goal.target_pose.header.stamp = rospy.Time.now()
-        goal.target_pose.pose = self.explorer.next_waypoint(self.avail_space_model)
+        goal.target_pose.pose = self.explorer.next_waypoint()
         self.goal_handler = self.move_client.send_goal(goal, self.done_cb, self.active_cb, self.feedback_cb)
         self.current_goal = goal
         self.explore_state = ExploreStates.MOVE_TO_GOAL
@@ -251,6 +249,9 @@ class MovementNode:
         """
         rospy.loginfo("track_face executing...")
         face = self.recent_face
+        if face == None:
+           rospy.logwarn("No recent face: Aborting!")
+           return
         x_centre = (face.left + face.right) / 2
         img_x_centre = fd.image_width / 2
         rospy.loginfo("Face centre: {}, img centre: {}".format(x_centre, img_x_centre))
@@ -306,7 +307,7 @@ class MovementNode:
 
 
 if __name__ == '__main__':
-    rospy.init_node(name="face_detect", log_level=rospy.INFO)
+    rospy.init_node(name="movement_node", log_level=rospy.INFO)
     rospy.loginfo("Starting movement_node...")
     mv = MovementNode()
     rospy.loginfo("Entering spin...")
