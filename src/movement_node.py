@@ -78,10 +78,10 @@ class MovementNode:
         self.avail_space_model.set_map(available_space)
 
         # Subscribe to the facial topics
-        self.faceTrackListener = rospy.Subscriber("/track_face", TrackFace, self.faceListener, queue_size=1)
-        self.faceLockListener = rospy.Subscriber("/face_locked", StudentFaceLocked, self.faceLockListener, queue_size=1)
-        self.faceLossListener = rospy.Subscriber("/face_lost", Empty, self.faceLossListener, queue_size=1)
-        self.facePendListener = rospy.Subscriber("/face_pend", Empty, self.facePendListener, queue_size=1)
+        self.faceTrackListener = rospy.Subscriber("/track_face", TrackFace, self.face_listener, queue_size=1)
+        self.faceLockListener = rospy.Subscriber("/face_locked", StudentFaceLocked, self.face_lock_listener, queue_size=1)
+        self.faceLossListener = rospy.Subscriber("/face_lost", Empty, self.face_loss_listener, queue_size=1)
+        self.facePendListener = rospy.Subscriber("/face_pend", Empty, self.face_pend_listener, queue_size=1)
 
         # Listen for estimated poses from amcl
         self.estimatedPoseListener = rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped,
@@ -267,7 +267,7 @@ class MovementNode:
         rospy.loginfo("Moving x:{} z:{} ...".format(move.linear.x, move.angular.z))
         self.movePublisher.publish(move)
 
-    def faceListener(self, face):
+    def face_listener(self, face):
         """
         Move according to the received facial data
         """
@@ -276,7 +276,7 @@ class MovementNode:
         self.base_state = BaseStates.TRACK_FACE
         self.trigger()
 
-    def faceLockListener(self, face):
+    def face_lock_listener(self, face):
         """
         Stand still when the face is locked
         """
@@ -285,7 +285,7 @@ class MovementNode:
         self.base_state = BaseStates.STILL
         self.trigger()
 
-    def facePendListener(self, msg):
+    def face_pend_listener(self, msg):
         """
         Keep tracking but don't move forward
         """
@@ -293,7 +293,7 @@ class MovementNode:
         self.base_state = BaseStates.TRACK_LOSS
         self.trigger()
 
-    def faceLossListener(self, msg):
+    def face_loss_listener(self, msg):
         """
         Return to exploration when the face is lost
         """
