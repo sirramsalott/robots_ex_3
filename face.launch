@@ -1,4 +1,8 @@
 <launch>
+
+    <arg name="visualise" default="true" />
+    <param name="visualise" value="$(arg visualise)" />
+
     <include file="$(find astra_launch)/launch/astrapro.launch" />
 
     <node name="usb_cam" pkg="usb_cam" type="usb_cam_node" output="screen">

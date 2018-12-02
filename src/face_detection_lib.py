@@ -6,7 +6,7 @@ import db_interface as db
 image_width = 640
 image_height = 480
 
-face_lock_threshold = 0.7
+face_lock_threshold = 0.6
 
 class Face:
     def __init__(self, eigenface, studentID=None):

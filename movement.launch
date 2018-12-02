@@ -1,5 +1,8 @@
 <launch>
 
+    <arg name="visualise" default="true" />
+    <param name="visualise" value="$(arg visualise)" />
+
     <include file="$(find robots_exercise_3)movement/waypoint_config.launch" />
     <include file="$(find robots_exercise_3)/movement/move_base.launch" />
 
