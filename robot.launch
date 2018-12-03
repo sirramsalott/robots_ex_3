@@ -1,13 +1,13 @@
 <launch>
 
-    <include file="$(find robots_exercise_3)movement/waypoint_config.launch" />
-    <include file="$(find robots_exercise_3)/movement/move_base.launch" />
+    <arg name="visualise" default="true" />
+    <param name="visualise" value="$(arg visualise)" />
 
-    <node name="rviz" type="rviz" pkg="rviz" args="-d $(find robots_exercise_3)/navigation.rviz" />
+    <arg name="rviz" default="true" />
 
-    <node name="movement_node" pkg="robots_exercise_3" type="movement_node.py">
-	<param name="available_space_file" value="$(find robots_exercise_3)/movement/stage/available_space.pgm" />
-    </node>
+    <include file="$(find robots_exercise_3)/movement.launch">
+        <arg name="rviz" value="$(arg rviz)" />
+    </include>
 
     <include file="$(find robots_exercise_3)/face.launch" />
 
