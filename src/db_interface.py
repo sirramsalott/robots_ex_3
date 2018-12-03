@@ -10,7 +10,9 @@ class DB_Interface:
 
     def getStudentCurrentLecture(self, studentID):
         # ID of lecture that student should be in, if any
-        self.c.execute("""
+        conn = sqlite3.connect('../database.db', isolation_level=None)
+        c = conn.cursor()
+        c.execute("""
                 SELECT id
                 FROM Lecture
                 WHERE moduleid IN (
@@ -20,57 +22,86 @@ class DB_Interface:
                 ) AND strftime('%w', 'now') = day
                 AND strftime('%H:%M','now') BETWEEN starttime AND endtime
                 """, (studentID,))
-        return self.c.fetchone()
+        result = c.fetchone()
+        conn.close()
+        return result
 
     def storeAbsence(self, studentID, lectureID):
         # Make a note in the database that the student was not at this lecture
-        self.c.execute("INSERT INTO Missed(lectureid, studentid) VALUES (?,?)", (lectureID, studentID))
+        conn = sqlite3.connect('../database.db', isolation_level=None)
+        c = conn.cursor()
+        c.execute("INSERT INTO Missed(lectureid, studentid) VALUES (?,?)", (lectureID, studentID))
+        conn.close()
         pass
 
     def getLectureNameAndLocation(self, lectureID):
         # Name and location of lecture from DB
-        self.c.execute("""
+        conn = sqlite3.connect('../database.db', isolation_level=None)
+        c = conn.cursor()
+        c.execute("""
                     SELECT location, name FROM Lecture   
                     JOIN Module
                     ON Lecture.moduleid = Module.id
                     WHERE Lecture.id=?
-                    """, (lectureID,))   
-        return self.c.fetchone()
+                    """, (lectureID,))
+        result = c.fetchone()
+        conn.close()   
+        return result
 
-    def getLectureInfo(self, lectureID):
-        self.c.execute("""
-                    SELECT Module.name, 
-        """)
+    # def getLectureInfo(self, lectureID):
+    #     conn = sqlite3.connect('../database.db', isolation_level=None)
+    #     c = conn.cursor()
+    #     c.execute("""
+    #                 SELECT Module.name, 
+    #     """)
+    #     conn.close()
 
     def storeNewStudent(self, studentID, eigenface, name=None):
         # Store a new student, with their face, in the DB
-        self.c.execute("INSERT OR IGNORE INTO Student(id, eigenface) VALUES (?,?)", (studentID, eigenface))
-        self.c.execute("UPDATE Student SET eigenface = ? WHERE id = ?", (eigenface, studentID))
+        conn = sqlite3.connect('../database.db', isolation_level=None)
+        c = conn.cursor()
+        c.execute("INSERT OR IGNORE INTO Student(id, eigenface) VALUES (?,?)", (studentID, eigenface))
+        c.execute("UPDATE Student SET eigenface = ? WHERE id = ?", (eigenface, studentID))
         if name != None:
-            self.c.execute("UPDATE Student SET name = ? WHERE id = ?", (name, studentID))
+            c.execute("UPDATE Student SET name = ? WHERE id = ?", (name, studentID))
+        conn.close()
         pass
 
     def getNewFaces(self, existingStudentIDs):
         # out of the list of existing student IDs needs to select student.id student.eigenface from student where student.id not in existing student ids
-        self.c.execute("""
+        conn = sqlite3.connect('../database.db', isolation_level=None)
+        c = conn.cursor()
+        c.execute("""
                     SELECT id, eigenface FROM Student
                     WHERE id NOT IN (%s)
         """ % ','.join('?' * len(existingStudentIDs)), existingStudentIDs)
-        return self.c.fetchall()
+        result = c.fetchall()
+        conn.close()
+        return result
 
     def getStudentName(self, studentID):
-        self.c.execute("SELECT name FROM Student WHERE id = ?", (studentID,))
-        return self.c.fetchone()
+        conn = sqlite3.connect('../database.db', isolation_level=None)
+        c = conn.cursor()
+        c.execute("SELECT name FROM Student WHERE id = ?", (studentID,))
+        result = c.fetchone()
+        conn.close()
+        return result
 
     def getLecturer(self, lecturerID):
-        self.c.execute("""
+        conn = sqlite3.connect('../database.db', isolation_level=None)
+        c = conn.cursor()
+        c.execute("""
                     SELECT name, email FROM Lecturer
                     WHERE id = ?
         """, (lecturerID,))
-        return self.c.fetchone()
+        result = c.fetchone()
+        conn.close()
+        return result
 
     def getAbsences(self, lecturerID, time='-3 Hour'):
-        self.c.execute("""
+        conn = sqlite3.connect('../database.db', isolation_level=None)
+        c = conn.cursor()
+        c.execute("""
                     SELECT Missed.studentid, Student.name, Module.name, Module.id, Lecture.id, Lecture.starttime, Lecture.endtime, Lecture.location, Missed.datetime FROM Missed
                     JOIN Lecture ON Missed.lectureid = Lecture.id
                     JOIN Student ON Missed.studentid = Student.id
@@ -79,17 +110,22 @@ class DB_Interface:
                     AND Missed.datetime >= datetime('now', ?)
                     ORDER BY Lecture.id
         """, (lecturerID,time))
-        return self.c.fetchall()
+        result = c.fetchall()
+        conn.close()
+        return result
 
     def getLectureAbsences(self, lectureID):
         # Return the students recorded as absent from a specified lecture within the last week.
-        self.c.execute("""
+        conn = sqlite3.connect('../database.db', isolation_level=None)
+        c = conn.cursor()
+        c.execute("""
                     SELECT Missed.studentid, Student.name, Missed.datetime FROM Missed
                     JOIN Student ON Missed.studentid = Student.id
                     WHERE Missed.lectureid = ?
                     AND Missed.datetime >= datetime('now', '-7 Day')
         """, (lectureID,))
-        return self.c.fetchall()
+        result = c.fetchall()
+        return result
 
 if __name__ == "__main__":
     # Code to test the database interface 
