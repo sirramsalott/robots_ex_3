@@ -27,6 +27,11 @@ class UIHandler:
                                             self.faceLostCallback,
                                             queue_size=1)
 
+        self.newStudentIDSub = rospy.Subscriber("new_student_id",
+                                                String,
+                                                self.newStudentIDCallback,
+                                                queue_size=1)
+
         self.interactionCompletePub = rospy.Publisher("interaction_complete",
                                                       Empty,
                                                       queue_size=1)
@@ -40,13 +45,16 @@ class UIHandler:
 
     def newFaceLockedCallback(self, msg):
         self.UIPresenter.newUser(msg.eigenface)
-        self.newFaceAddedPub.publish(Empty())
 
     def faceLostCallback(self, msg):
         self.UIPresenter.killInteraction()
 
     def publishInteractionComplete(self):
         self.interactionCompletePub.publish(Empty())
+
+    def newStudentIDCallback(self, msg):
+        self.UIPresenter.notifyIDSubmitted(msg.data)
+        self.newFaceAddedPub.publish(Empty())
 
 
 if __name__ == "__main__":

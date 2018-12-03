@@ -2,9 +2,12 @@
 
 import numpy as np
 import cv2
+import re
+import pytesseract
+from collections import Counter
 
 import rospy
-from std_msgs.msg import Empty
+from std_msgs.msg import Empty, String
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 
@@ -14,7 +17,8 @@ from face_detection_lib import FaceDetectionModel
 class FaceHandler:
     MODE_SCANNING = 0
     MODE_TRACKING = 1
-    MODE_LOCKED = 2
+    MODE_KNOWN_FACE_LOCKED = 2
+    MODE_CARD_TRACKING = 3
     FRAME_RATE = 10
     FACE_LOST_THRESHOLD = 10
     
@@ -33,12 +37,15 @@ class FaceHandler:
         self.newFaceLockedPub = rospy.Publisher("new_face_locked", NewFaceLocked, queue_size=1)
         self.faceLostPub = rospy.Publisher("face_lost", Empty, queue_size=1)
         self.facePendPub = rospy.Publisher("face_pend", Empty, queue_size=1)
+        self.newStudentIDPub = rospy.Publisher("new_student_id", String, queue_size=1)
 
         self.imageSub = rospy.Subscriber("/usb_cam/image_raw", Image, self.imageCallback, queue_size=1)
         self.interactionCompleteSub = rospy.Subscriber("interaction_complete", Empty, self.completeCallback, queue_size=1)
         self.newFaceAddedSub = rospy.Subscriber("new_face_added", Empty, self.newFaceCallback, queue_size=1)
 
         self.bridge = CvBridge()
+        self.idre = re.compile(r"\d\d\d\d\d\d\d")
+        self.idCounter = Counter()
 
     def completeCallback(self, msg):
         self.mode = self.MODE_SCANNING
@@ -55,8 +62,11 @@ class FaceHandler:
             elif self.mode == self.MODE_TRACKING:
                 img = self.trackingMode(img)
 
-            elif self.mode == self.MODE_LOCKED:
+            elif self.mode == self.MODE_KNOWN_FACE_LOCKED:
                 img = self.lockedMode(img)
+
+            elif self.mode = self.MODE_CARD_TRACKING:
+                img = self.cardTrackingMode(img)
 
             if self.visualise:
                 cv2.imshow("Camera Stream", img)
@@ -98,11 +108,12 @@ class FaceHandler:
                                            colour=(0, 255, 0))
 
                 if self.fdm.faceIsCentred(box, img):
-                    self.mode = self.MODE_LOCKED
                     faceID = self.fdm.getFaceID(face)
                     if faceID is None:
+                        self.mode = self.MODE_CARD_TRACKING
                         self.publishNewFaceLocked(face)
                     else:
+                        self.mode = self.MODE_KNOWN_FACE_LOCKED
                         self.publishStudentFaceLocked(faceID)
                 else:
                     self.publishTrackFace(box)
@@ -119,6 +130,25 @@ class FaceHandler:
         self.faceLost()
         return img
 
+    def cardTrackingMode(self, im):
+        img = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+        img = cv2.threshold(img, 120, 255, cv2.THRESH_BINARY)[1]
+        img = cv2.medianBlur(img, 3)
+
+        ocrText = pytesseract.image_to_string(img)
+        m = idre.search(ocrText)
+        if m:
+            group = m.group()
+            self.idCounter[group] += 1
+
+            if sum(self.idCounter.values()) >= 5:
+                maxID = max(self.idCounter, key=self.idCounter.get)
+                self.publishNewStudentID(maxID)
+                self.idCounter = Counter()
+                self.faceLost()
+
+        return img
+
     def faceLost(self):
         self.framesSinceLastFace += 1
         if self.framesSinceLastFace <= self.FACE_LOST_THRESHOLD:
@@ -128,6 +158,11 @@ class FaceHandler:
             self.mode = self.MODE_SCANNING
             self.trackingFace = None
             self.framesSinceLastFace = 0
+
+    def publishNewStudentID(self, studentID):
+        msg = String()
+        msg.data = studentID
+        self.newStudentIDPub.publish(msg)
 
     def publishTrackFace(self, boundingBox):
         trackFaceMsg = TrackFace()
