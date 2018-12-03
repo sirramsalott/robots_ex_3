@@ -21,7 +21,7 @@ class SpeechView:
 
     def promptForID(self):
         self.soundHandle.say("please enter your i d")
-        print("Please enter your id")
+        idInput = raw_input("Please enter your id")
         self.presenter.notifyIDSubmitted(idInput)
 
     def killInteraction(self):
