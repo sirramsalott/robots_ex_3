@@ -98,6 +98,7 @@ class FaceHandler:
                                            colour=(0, 255, 0))
 
                 if self.fdm.faceIsCentred(box, img):
+                    self.mode = self.MODE_LOCKED
                     faceID = self.fdm.getFaceID(face)
                     if faceID is None:
                         self.publishNewFaceLocked(face)
@@ -109,11 +110,11 @@ class FaceHandler:
         return img
 
     def lockedMode(self, img):
-        boundingBoxes = self.fdm.findBoundingBoxes(img)
+        boundingBoxes = self.fdm.getBoundingBoxes(img)
         for box in boundingBoxes:
             if self.fdm.facesMatch(box, img, self.trackingFace)[0]:
                 return self.drawBoundingBox(img, box,
-                                            colour=(0, 0, 255))
+                                            colour=(255, 0, 0))
 
         self.faceLost()
         return img

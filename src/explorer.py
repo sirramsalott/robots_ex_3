@@ -7,7 +7,6 @@ from geometry_msgs.msg import Pose, Quaternion
 import util
 import random as rand
 
-
 class Explorer:
 
     def __init__(self, map_model):
@@ -19,11 +18,12 @@ class Explorer:
 
         self.decay = 0.97
         self.range = 200
-
+	
         self.visualise = rospy.get_param("/visualise")
-	if self.visualise:
+        if self.visualise:
             plt.ion()
-            self.redraw()
+            plt.imshow(self.heatmap, cmap='hot', interpolation='nearest')
+            plt.show()
         
         self.walkable_space = [(x, y) for x in range(0, self.map_model.map_width) for y in range(0, self.map_model.map_height) if
                                self.map[x, y] == 1]
@@ -38,11 +38,6 @@ class Explorer:
         self.heatmap = (self.heatmap * self.decay) + m
         self.redraw()
 
-    def redraw(self):
-        if self.visualise:
-            plt.imshow(self.heatmap, cmap='hot', interpolation='nearest')
-            plt.show()
-
     def least_space(self):
         (x, y) = self.walkable_space[0]
         min_val = self.heat_map[x, y]
@@ -54,6 +49,12 @@ class Explorer:
 
     def load_map(self):
         return np.array([min(i, 1) for i in self.map_model.occupancy.data]).reshape((self.map_model.map_height, self.map_model.map_width))
+
+    def redraw():
+        if self.visualise:
+            print("Redrawing")
+            plt.imshow(self.heatmap, cmap='hot', interpolation='nearest')
+            plt.show()
 
     def next_waypoint(self):
         """

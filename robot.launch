@@ -3,7 +3,11 @@
     <arg name="visualise" default="true" />
     <param name="visualise" value="$(arg visualise)" />
 
-    <include file="$(find robots_exercise_3)/movement.launch" />
+    <arg name="rviz" default="true" />
+
+    <include file="$(find robots_exercise_3)/movement.launch">
+        <arg name="rviz" value="$(arg rviz)" />
+    </include>
 
     <include file="$(find robots_exercise_3)/face.launch" />
 
