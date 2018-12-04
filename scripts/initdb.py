@@ -107,7 +107,7 @@ c.execute("INSERT INTO %s(studentid, moduleid) VALUES (1558595, 1);" % ENROLLMEN
 c.execute("INSERT INTO %s(studentid, moduleid) VALUES (1558595, 3);" % ENROLLMENT_TABLE_NAME) # Mike
 c.execute("INSERT INTO %s(studentid, moduleid) VALUES (1556067, 1);" % ENROLLMENT_TABLE_NAME) # Adriana -wrong ID
 c.execute("INSERT INTO %s(studentid, moduleid) VALUES (1556067, 1);" % ENROLLMENT_TABLE_NAME) # Adriana -wrong ID
-c.execute("INSERT INTO %s(starttime, day, endtime, location, moduleid) VALUES ('09:00', '1', '10:00', 'Room 101',1);" % LECTURE_TABLE_NAME)
+c.execute("INSERT INTO %s(starttime, day, endtime, location, moduleid) VALUES ('21:00', '2', '23:59', 'Room 101',1);" % LECTURE_TABLE_NAME)
 c.execute("INSERT INTO %s(starttime, day, endtime, location, moduleid) VALUES ('11:00', '1', '12:00', 'Room 203',1);" % LECTURE_TABLE_NAME)
 c.execute("INSERT INTO %s(starttime, day, endtime, location, moduleid) VALUES ('09:00', '2', '10:00', 'Room 304',2);" % LECTURE_TABLE_NAME)
 c.execute("INSERT INTO %s(starttime, day, endtime, location, moduleid) VALUES ('13:00', '2', '14:00', 'Room 105',2);" % LECTURE_TABLE_NAME)
