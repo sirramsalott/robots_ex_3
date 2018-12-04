@@ -28,6 +28,7 @@ class SpeechView:
 
     def promptForID(self):
         os.system("say \"please enter your i d\"")
+        rospy.loginfo("please enter your id")
         self.listening_for_id = True
         #idInput = raw_input("Please enter your id")
 
@@ -46,6 +47,7 @@ class SpeechView:
             rospy.loginfo(self.word)
         if self.counter == 7 and self.checking == False:
             os.system("say \"Is this your i d {} \"".format(self.word))
+            rospy.loginfo("Is this your id?")
             self.checking = True
             self.listening_for_id = False
         if self.checking:
