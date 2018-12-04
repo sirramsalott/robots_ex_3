@@ -9,8 +9,8 @@
 		
 	<!-- run hokuyo laser node -->
 	<node pkg="urg_node" type="urg_node" name="hokuyo">
-		<remap from="/laser" to="/base_scan" />
-		<remap from="/scan" to="/base_scan" />
+		<remap from="/laser" to="/broken_scan" />
+		<remap from="/scan" to="/broken_scan" />
 	</node>
 
 
