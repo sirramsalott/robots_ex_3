@@ -1,4 +1,5 @@
 import db_interface as db
+import rospy
 
 
 class UIPresenter:
@@ -12,22 +13,24 @@ class UIPresenter:
 
     def nagStudent(self, studentID):
         lectureID = self.dbHandle.getStudentCurrentLecture(studentID)
-
+        print("Student recognised!")
         if lectureID is not None:
             self.dbHandle.storeAbsence(studentID, lectureID)
             lectureName, location = self.dbHandle.getLectureNameAndLocation(lectureID)
             self.view.deliverNag(lectureName, location)
 
     def newUser(self, eigenface):
+        print("EIGENFACE: {}".format(eigenface))
         self.cachedEigenface = eigenface
         self.view.promptForID()
 
     def killInteraction(self):
-        self.cachedEigenface = None
+        #self.cachedEigenface = None
         self.view.killInteraction()
 
     def notifyIDSubmitted(self, studentID):
         # THIS IS THE ONLY METHOD ON PRESENTER THAT VIEW SHOULD CALL
+        rospy.loginfo("ID Submitted {}".format(studentID))
         if self.cachedEigenface is None:
             self.view.warn("StudentID submitted, but no face cached on presenter")
         else:

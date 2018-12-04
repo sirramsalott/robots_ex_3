@@ -85,7 +85,8 @@ class MovementNode:
 
         # Listen for estimated poses from amcl
         self.estimatedPoseListener = rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped,
-                                                      self.estimated_pose_listener, queue_size=1)
+                                                      self.estimated_pose_listener, queue_size=100)
+
 
         # Publish the robots movement commands
         self.movePublisher = rospy.Publisher("/cmd_vel", Twist, queue_size=1)
@@ -161,7 +162,9 @@ class MovementNode:
         Update the believed pose of the robot when amcl sends an update
         :param pose_message: THe believed pose of the robot according to amcl
         """
+        rospy.logwarn("Received pose")
         self.pose = pose_message
+        #self.explorer.update_map(self.pose.pose.pose)
 
     def active_cb(self):
         """

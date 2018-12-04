@@ -1,0 +1,27 @@
+<launch>
+
+    <node 
+        name="recognizer"
+        pkg="pocketsphinx"
+        type="recognizer.py"
+        output="screen"
+        >
+        <param 
+            name="dict" 
+            value="$(find robots_exercise_3)/src/words.dic"
+        />
+        <param
+            name="lm" 
+            value="$(find robots_exercise_3)/language_model/hub4wsj_sc_8k"
+        />
+        <param 
+            name="kws" 
+            value="$(find robots_exercise_3)/vocab/stu.kwlist"
+        />
+        <param 
+            name="stream" 
+            value="true" 
+        />
+    </node>
+
+</launch>
