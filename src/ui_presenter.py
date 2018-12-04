@@ -10,6 +10,9 @@ class UIPresenter:
         self.view = view
         self.view.setPresenter(self)
         self.dbHandle = db.DB_Interface()
+        self.interactionCompletePub = rospy.Publisher("/interaction_complete",
+                                                      Empty,
+                                                      queue_size=1)
 
     def nagStudent(self, studentID):
         lectureID = self.dbHandle.getStudentCurrentLecture(studentID)
@@ -36,3 +39,4 @@ class UIPresenter:
         else:
             self.dbHandle.storeNewStudent(studentID, self.cachedEigenface)
             self.cachedEigenface = None
+            self.interactionCompletePub.publish(Empty())
