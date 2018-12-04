@@ -2,7 +2,7 @@
 # Warning: this will delete everything in the database
 import sqlite3
 
-conn = sqlite3.connect('../database.db')
+conn = sqlite3.connect('database.db')
 
 c = conn.cursor()
 

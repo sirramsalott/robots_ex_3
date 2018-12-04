@@ -64,5 +64,5 @@ class FaceDetectionModel:
         return (float(height) / image_height) >= face_lock_threshold
 
     def updateFaceDBCache(self):
-        self.faceDBCache += [(i, f) for (i, f) in self.dbHandle.getNewFaces(existingStudentIDs=self.faceDBCache) if f is not None]
+        self.faceDBCache += [(i, f) for (i, f) in self.dbHandle.getNewFaces(existingStudentIDs=[i for (i, f) in self.faceDBCache]) if f is not None]
         

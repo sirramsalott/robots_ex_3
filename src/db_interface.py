@@ -1,12 +1,7 @@
 import sqlite3
+import rospy
 
 class DB_Interface:
-    def __init__(self):
-        self.conn = sqlite3.connect('/home/robot/catkin_ws/src/robots_ex_3/database.db', isolation_level=None)
-        self.c = self.conn.cursor()
-
-    def __del__(self):
-        self.conn.close()
 
     def tuple_to_string(self, t):
         if t is None:
@@ -33,7 +28,7 @@ class DB_Interface:
                 ) AND strftime('%w', 'now') = day
                 AND strftime('%H:%M','now') BETWEEN starttime AND endtime
                 """, (studentID,))
-        return self.c.fetchone()
+        return c.fetchone()
 
     def storeAbsence(self, studentID, lectureID):
         # Make a note in the database that the student was not at this lecture
@@ -53,7 +48,7 @@ class DB_Interface:
                     ON Lecture.moduleid = Module.id
                     WHERE Lecture.id=?
                     """, (lectureID,))   
-        return self.c.fetchone()
+        return c.fetchone()
 
     # def getLectureInfo(self, lectureID):
     #     conn = sqlite3.connect('/home/robot/catkin_ws/src/robots_ex_3/database.db', isolation_level=None)
@@ -70,17 +65,21 @@ class DB_Interface:
         c.execute("INSERT OR IGNORE INTO Student(id, eigenface) VALUES (?,?)", (studentID, self.tuple_to_string(eigenface)))
         c.execute("UPDATE Student SET eigenface = ? WHERE id = ?", (self.tuple_to_string(eigenface), studentID))
         if name != None:
-            self.c.execute("UPDATE Student SET name = ? WHERE id = ?", (name, studentID))
+            c.execute("UPDATE Student SET name = ? WHERE id = ?", (name, studentID))
         pass
 
     def getNewFaces(self, existingStudentIDs):
         # out of the list of existing student IDs needs to select student.id student.eigenface from student where student.id not in existing student ids
+        rospy.logwarn(existingStudentIDs)
         conn = sqlite3.connect('/home/robot/catkin_ws/src/robots_ex_3/database.db', isolation_level=None)
         c = conn.cursor()
-        c.execute("""
-                    SELECT id, eigenface FROM Student
-                    WHERE id NOT IN (%s)
-        """ % ','.join('?' * len(existingStudentIDs)), existingStudentIDs)
+        if not existingStudentIDs:
+            c.execute("SELECT id, eigenface FROM Student")
+     	else:
+	    c.execute("""
+               	SELECT id, eigenface FROM Student
+               	WHERE id NOT IN (%s)
+            """ % ','.join('?' * len(existingStudentIDs)), existingStudentIDs)
         result = c.fetchall()
         conn.close()
         return [(i, self.string_to_tuple(f)) for i, f in result]
@@ -100,7 +99,7 @@ class DB_Interface:
                     SELECT name, email FROM Lecturer
                     WHERE id = ?
         """, (lecturerID,))
-        return self.c.fetchone()
+        return c.fetchone()
 
     def getAbsences(self, lecturerID, time='-3 Hour'):
         conn = sqlite3.connect('/home/robot/catkin_ws/src/robots_ex_3/database.db', isolation_level=None)
@@ -114,7 +113,7 @@ class DB_Interface:
                     AND Missed.datetime >= datetime('now', ?)
                     ORDER BY Lecture.id
         """, (lecturerID,time))
-        return self.c.fetchall()
+        return c.fetchall()
 
     def getLectureAbsences(self, lectureID):
         # Return the students recorded as absent from a specified lecture within the last week.
@@ -126,7 +125,7 @@ class DB_Interface:
                     WHERE Missed.lectureid = ?
                     AND Missed.datetime >= datetime('now', '-7 Day')
         """, (lectureID,))
-        return self.c.fetchall()
+        return c.fetchall()
 
 if __name__ == "__main__":
     # Code to test the database interface 
