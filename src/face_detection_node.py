@@ -37,7 +37,7 @@ class FaceHandler:
         self.facePendPub = rospy.Publisher("face_pend", Empty, queue_size=1)
 
         self.imageSub = rospy.Subscriber("/usb_cam/image_raw", Image, self.imageCallback, queue_size=1)
-        self.interactionCompleteSub = rospy.Subscriber("interaction_complete", Empty, self.completeCallback, queue_size=1)
+        self.interactionCompleteSub = rospy.Subscriber("/interaction_complete", Empty, self.completeCallback, queue_size=1)
         self.newFaceAddedSub = rospy.Subscriber("new_face_added", Empty, self.newFaceCallback, queue_size=1)
 
         self.bridge = CvBridge()

@@ -10,7 +10,7 @@ class UIPresenter:
         self.view = view
         self.view.setPresenter(self)
         self.dbHandle = db.DB_Interface()
-        self.interactionCompletePub = rospy.Publisher("interaction_complete",
+        self.interactionCompletePub = rospy.Publisher("/interaction_complete",
                                                       Empty,
                                                       queue_size=1)
 
