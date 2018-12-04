@@ -62,7 +62,7 @@ class FaceHandler:
                 cv2.imshow("Camera Stream", img)
                 cv2.waitKey(1)
 
-    def newFaceCallback(self):
+    def newFaceCallback(self, msg):
         self.fdm.updateFaceDBCache()
 
     def scanningMode(self, img):
@@ -139,7 +139,7 @@ class FaceHandler:
 
     def publishStudentFaceLocked(self, studentID):
         faceLockedMsg = StudentFaceLocked()
-        faceLockedMsg.studentID = studentID
+        faceLockedMsg.studentID = str(studentID)
         self.studentFaceLockedPub.publish(faceLockedMsg)
 
     def publishNewFaceLocked(self, eigenface):

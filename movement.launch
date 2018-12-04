@@ -16,4 +16,6 @@
 	<param name="available_space_file" value="$(find robots_exercise_3)/movement/stage/available_space.pgm" />
     </node>
 
+    <!--<node name="map_show" pkg="robots_exercise_3" type="map_show.py" />-->
+
 </launch>

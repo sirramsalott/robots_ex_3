@@ -1,6 +1,6 @@
 import face_recognition as fr
 import cv2
-
+import numpy as np
 import db_interface as db
 
 image_width = 640
@@ -19,7 +19,7 @@ class FaceDetectionModel:
         self.dbHandle = db.DB_Interface()
 
         self.faceDBCache = []
-        self.faceDBCache = self.updateFaceDBCache()
+        self.updateFaceDBCache()
 
     def getBoundingBoxes(self, img):
         IMG_SCALE = 4.
@@ -51,8 +51,10 @@ class FaceDetectionModel:
         return any(fr.compare_faces([faceToMatch], eigenface)), eigenface
 
     def getFaceID(self, faceToMatch):
+        print("FACE CACHE {}".format(self.faceDBCache))
         for studentID, eigenface in self.faceDBCache:
-            if any(fr.compare_faces([faceToMatch], eigenface)):
+            print("EIG {}".format(np.array(eigenface)))
+            if any(fr.compare_faces([faceToMatch], np.array(eigenface))):
                 return studentID
 
         return None
@@ -62,5 +64,5 @@ class FaceDetectionModel:
         return (float(height) / image_height) >= face_lock_threshold
 
     def updateFaceDBCache(self):
-        #self.faceDBCache += self.dbHandle.getNewFaces(existingStudentIDs=self.faceDBCache)
-        return []
+        self.faceDBCache += [(i, f) for (i, f) in self.dbHandle.getNewFaces(existingStudentIDs=self.faceDBCache) if f is not None]
+        

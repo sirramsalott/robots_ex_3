@@ -2,15 +2,28 @@ import sqlite3
 
 class DB_Interface:
     def __init__(self):
-        self.conn = sqlite3.connect('../database.db', isolation_level=None)
+        self.conn = sqlite3.connect('/home/robot/catkin_ws/src/robots_ex_3/database.db', isolation_level=None)
         self.c = self.conn.cursor()
 
     def __del__(self):
         self.conn.close()
 
+    def tuple_to_string(self, t):
+        if t is None:
+            return None
+        return ','.join(str(p) for p in t)
+
+    def string_to_tuple(self, s):
+        if s is None:
+            return None
+        return tuple(float(p) for p in s.split(','))
+
     def getStudentCurrentLecture(self, studentID):
         # ID of lecture that student should be in, if any
-        self.c.execute("""
+
+        conn = sqlite3.connect('/home/robot/catkin_ws/src/robots_ex_3/database.db', isolation_level=None)
+        c = conn.cursor()
+        c.execute("""
                 SELECT id
                 FROM Lecture
                 WHERE moduleid IN (
@@ -24,12 +37,17 @@ class DB_Interface:
 
     def storeAbsence(self, studentID, lectureID):
         # Make a note in the database that the student was not at this lecture
-        self.c.execute("INSERT INTO Missed(lectureid, studentid) VALUES (?,?)", (lectureID, studentID))
+        conn = sqlite3.connect('/home/robot/catkin_ws/src/robots_ex_3/database.db', isolation_level=None)
+        c = conn.cursor()
+        c.execute("INSERT INTO Missed(lectureid, studentid) VALUES (?,?)", (lectureID, studentID))
+        conn.close()
         pass
 
     def getLectureNameAndLocation(self, lectureID):
         # Name and location of lecture from DB
-        self.c.execute("""
+        conn = sqlite3.connect('/home/robot/catkin_ws/src/robots_ex_3/database.db', isolation_level=None)
+        c = conn.cursor()
+        c.execute("""
                     SELECT location, name FROM Lecture   
                     JOIN Module
                     ON Lecture.moduleid = Module.id
@@ -37,40 +55,57 @@ class DB_Interface:
                     """, (lectureID,))   
         return self.c.fetchone()
 
-    def getLectureInfo(self, lectureID):
-        self.c.execute("""
-                    SELECT Module.name, 
-        """)
+    # def getLectureInfo(self, lectureID):
+    #     conn = sqlite3.connect('/home/robot/catkin_ws/src/robots_ex_3/database.db', isolation_level=None)
+    #     c = conn.cursor()
+    #     c.execute("""
+    #                 SELECT Module.name, 
+    #     """)
+    #     conn.close()
 
     def storeNewStudent(self, studentID, eigenface, name=None):
         # Store a new student, with their face, in the DB
-        self.c.execute("INSERT OR IGNORE INTO Student(id, eigenface) VALUES (?,?)", (studentID, eigenface))
-        self.c.execute("UPDATE Student SET eigenface = ? WHERE id = ?", (eigenface, studentID))
+        conn = sqlite3.connect('/home/robot/catkin_ws/src/robots_ex_3/database.db', isolation_level=None)
+        c = conn.cursor()
+        c.execute("INSERT OR IGNORE INTO Student(id, eigenface) VALUES (?,?)", (studentID, self.tuple_to_string(eigenface)))
+        c.execute("UPDATE Student SET eigenface = ? WHERE id = ?", (self.tuple_to_string(eigenface), studentID))
         if name != None:
             self.c.execute("UPDATE Student SET name = ? WHERE id = ?", (name, studentID))
         pass
 
     def getNewFaces(self, existingStudentIDs):
         # out of the list of existing student IDs needs to select student.id student.eigenface from student where student.id not in existing student ids
-        self.c.execute("""
+        conn = sqlite3.connect('/home/robot/catkin_ws/src/robots_ex_3/database.db', isolation_level=None)
+        c = conn.cursor()
+        c.execute("""
                     SELECT id, eigenface FROM Student
                     WHERE id NOT IN (%s)
         """ % ','.join('?' * len(existingStudentIDs)), existingStudentIDs)
-        return self.c.fetchall()
+        result = c.fetchall()
+        conn.close()
+        return [(i, self.string_to_tuple(f)) for i, f in result]
 
     def getStudentName(self, studentID):
-        self.c.execute("SELECT name FROM Student WHERE id = ?", (studentID,))
-        return self.c.fetchone()
+        conn = sqlite3.connect('/home/robot/catkin_ws/src/robots_ex_3/database.db', isolation_level=None)
+        c = conn.cursor()
+        c.execute("SELECT name FROM Student WHERE id = ?", (studentID,))
+        result = c.fetchone()
+        conn.close()
+        return result
 
     def getLecturer(self, lecturerID):
-        self.c.execute("""
+        conn = sqlite3.connect('/home/robot/catkin_ws/src/robots_ex_3/database.db', isolation_level=None)
+        c = conn.cursor()
+        c.execute("""
                     SELECT name, email FROM Lecturer
                     WHERE id = ?
         """, (lecturerID,))
         return self.c.fetchone()
 
     def getAbsences(self, lecturerID, time='-3 Hour'):
-        self.c.execute("""
+        conn = sqlite3.connect('/home/robot/catkin_ws/src/robots_ex_3/database.db', isolation_level=None)
+        c = conn.cursor()
+        c.execute("""
                     SELECT Missed.studentid, Student.name, Module.name, Module.id, Lecture.id, Lecture.starttime, Lecture.endtime, Lecture.location, Missed.datetime FROM Missed
                     JOIN Lecture ON Missed.lectureid = Lecture.id
                     JOIN Student ON Missed.studentid = Student.id
@@ -83,7 +118,9 @@ class DB_Interface:
 
     def getLectureAbsences(self, lectureID):
         # Return the students recorded as absent from a specified lecture within the last week.
-        self.c.execute("""
+        conn = sqlite3.connect('/home/robot/catkin_ws/src/robots_ex_3/database.db', isolation_level=None)
+        c = conn.cursor()
+        c.execute("""
                     SELECT Missed.studentid, Student.name, Missed.datetime FROM Missed
                     JOIN Student ON Missed.studentid = Student.id
                     WHERE Missed.lectureid = ?
@@ -94,8 +131,7 @@ class DB_Interface:
 if __name__ == "__main__":
     # Code to test the database interface 
     db = DB_Interface()
-    db.storeNewStudent(1549228, 0, "Bob")
-    db.storeNewStudent(1549223, 0)
+    #db.storeNewStudent(1549228, db.tuple_to_string((1.0,2.0,3.0)), "Bob")
     print(db.getStudentName(1549223))
     print(db.getStudentName(1549228))
     print(db.getNewFaces([]))

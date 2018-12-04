@@ -54,6 +54,7 @@ add_message_files(
   TrackFace.msg
   StudentFaceLocked.msg
   NewFaceLocked.msg
+  Heatmap.msg
 )
 
 ## Generate services in the 'srv' folder

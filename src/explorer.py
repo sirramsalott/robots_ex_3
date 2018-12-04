@@ -4,8 +4,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import multivariate_normal
 from geometry_msgs.msg import Pose, Quaternion
+from robots_exercise_3.msg import Heatmap
 import util
 import random as rand
+import cv2
+
+crop_left = 2900
+crop_right = 3100
+crop_top = 2900
+crop_bottom = 3100
+crop_width = crop_right - crop_left
+crop_height = crop_bottom - crop_top
 
 class Explorer:
 
@@ -19,24 +28,38 @@ class Explorer:
         self.decay = 0.97
         self.range = 200
 	
-        self.visualise = rospy.get_param("/visualise")
+        self.visualise = True #rospy.get_param("/visualise")
         if self.visualise:
-            plt.ion()
-            plt.imshow(self.heatmap, cmap='hot', interpolation='nearest')
-            plt.show()
+            self.redraw()
         
         self.walkable_space = [(x, y) for x in range(0, self.map_model.map_width) for y in range(0, self.map_model.map_height) if
                                self.map[x, y] == 1]
 
+    def get_h_map(self):
+        return self.heatmap[crop_left:crop_right, crop_top:crop_bottom]
+
+    def max_min(self, arr):
+        return np.amax(arr), np.amin(arr)
+
     def update_map(self, pose):
+        rospy.logwarn("Updating map")
         (x, y) = util.pose_to_map_coords(self.map_model, pose) 
-        a = multivariate_normal.pdf(np.linspace(0, self.map_model.map_width, num=self.map_model.map_width), mean=pose.position.x,
+        a = multivariate_normal.pdf(np.linspace(0, crop_width, num=crop_width), mean=pose.position.x - crop_left,
                                     cov=self.range)
-        b = multivariate_normal.pdf(np.linspace(0, self.map_model.map_height, num=self.map_model.map_height), mean=pose.position.y,
+        b = multivariate_normal.pdf(np.linspace(0, crop_height, num=crop_height), mean=pose.position.y - crop_top,
                                     cov=self.range)
         m = (np.array(a)[np.newaxis]).T.dot((np.array(a)[np.newaxis]))
-        self.heatmap = (self.heatmap * self.decay) + m
+        self.heatmap[crop_left:crop_right, crop_top:crop_bottom] *= self.decay
+        self.heatmap[crop_left:crop_right, crop_top:crop_bottom] += m
+        rospy.logwarn("Calling redraw")
+        #msg = Heatmap()
+        #crop_map = self.get_h_map()
+        #msg.width = crop_map.shape[0]
+        #msg.height = crop_map.shape[1]
+        #msg.data = crop_map.flatten()
+        #self.map_publisher.publish(msg)
         self.redraw()
+        rospy.logwarn("Redrawn")
 
     def least_space(self):
         (x, y) = self.walkable_space[0]
@@ -50,11 +73,17 @@ class Explorer:
     def load_map(self):
         return np.array([min(i, 1) for i in self.map_model.occupancy.data]).reshape((self.map_model.map_height, self.map_model.map_width))
 
-    def redraw():
+    def redraw(self):
         if self.visualise:
-            print("Redrawing")
-            plt.imshow(self.heatmap, cmap='hot', interpolation='nearest')
-            plt.show()
+            rospy.logwarn("Redrawing post-visualise check")
+            high, low = self.max_min(self.get_h_map())
+            mod = cv2.normalize(self.get_h_map(), None, 0, 255, cv2.NORM_MINMAX)
+            print(mod)
+            #mod = np.zeros((500,500), np.uint8)
+            #cv2.imshow("Exploration map", mod)
+            rospy.logwarn("done imshow")
+            #cv2.waitKey()
+            rospy.logwarn("Done")
 
     def next_waypoint(self):
         """
