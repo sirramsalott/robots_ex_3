@@ -2,7 +2,7 @@
 
 import rospy
 
-from std_msgs.msg import Empty
+from std_msgs.msg import Empty, String
 from robots_exercise_3.msg import StudentFaceLocked, NewFaceLocked
 
 from ui_presenter import UIPresenter
