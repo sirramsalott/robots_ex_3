@@ -24,7 +24,7 @@ import explorer
 class BaseStates(Enum):
     EXPLORE = 1
     TRACK_FACE = 2
-    TRACK_LOSS = 3
+    PEND = 3
     STILL = 4
     BOOT = 5
 
@@ -83,6 +83,9 @@ class MovementNode:
         self.faceLossListener = rospy.Subscriber("/face_lost", Empty, self.face_loss_listener, queue_size=1)
         self.facePendListener = rospy.Subscriber("/face_pend", Empty, self.face_pend_listener, queue_size=1)
 
+        # Listen for completed interactions
+        self.interactionCompleteListener = rospy.Subscriber("/interaction_complete", Empty, self.interaction_complete, queue_size=1)
+
         # Listen for estimated poses from amcl
         self.estimatedPoseListener = rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped,
                                                       self.estimated_pose_listener, queue_size=100)
@@ -137,12 +140,13 @@ class MovementNode:
             self.track_face(True)
             return
 
-        if self.base_state == BaseStates.TRACK_LOSS:
+        if self.base_state == BaseStates.PEND:
             self.track_face(False)
             return
 
         if self.base_state == BaseStates.STILL:
-            self.track_face(False)
+            #self.track_face(False)
+            return
 
     def print_state(self):
         """
@@ -294,7 +298,7 @@ class MovementNode:
         Keep tracking but don't move forward
         """
         rospy.loginfo("Face pend received!")
-        self.base_state = BaseStates.TRACK_LOSS
+        self.base_state = BaseStates.PEND
         self.trigger()
 
     def face_loss_listener(self, msg):
@@ -302,6 +306,22 @@ class MovementNode:
         Return to exploration when the face is lost
         """
         rospy.loginfo("Face loss received!")
+        self.base_state = BaseStates.EXPLORE
+        self.trigger()
+
+    def face_loss_listener(self, msg):
+        """
+        Return to exploration when the face is lost
+        """
+        rospy.loginfo("Face loss received!")
+        self.base_state = BaseStates.EXPLORE
+        self.trigger()
+
+    def interaction_complete(self, msg):
+        """
+        Return to exploration when the face is lost
+        """
+        rospy.loginfo("Interaction complete received!")
         self.base_state = BaseStates.EXPLORE
         self.trigger()
 
