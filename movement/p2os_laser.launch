@@ -13,6 +13,7 @@
 		<remap from="/scan" to="/broken_scan" />
 	</node>
 
+	<node name="fix_laser_scan" pkg="robots_exercise_3" type="fix_laser_scan.py" />
 
 	<!-- transform laser co-ordinates into robot-base co-ordinate frame -->
 	<node pkg="tf" type="static_transform_publisher" name="stp_laser" output="screen" args="0.135 0 0.202 0 0 0 base_link laser 100" />
