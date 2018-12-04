@@ -2,11 +2,12 @@
 
 import rospy
 
-from std_msgs.msg import Empty
+from std_msgs.msg import Empty, String
 from robots_exercise_3.msg import StudentFaceLocked, NewFaceLocked
 
 from ui_presenter import UIPresenter
 from text_ui import TextView
+from speech_ui import SpeechView
 
 
 class UIHandler:
@@ -49,7 +50,8 @@ class UIHandler:
 
 
 if __name__ == "__main__":
-    view = TextView()
+    #view = TextView()
+    view = SpeechView()
     uiHandler = UIHandler(view)
     rospy.init_node("ui")
     rospy.spin()

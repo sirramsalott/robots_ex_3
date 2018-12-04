@@ -1,4 +1,5 @@
 import db_interface as db
+import rospy
 
 
 class UIPresenter:
@@ -29,6 +30,7 @@ class UIPresenter:
 
     def notifyIDSubmitted(self, studentID):
         # THIS IS THE ONLY METHOD ON PRESENTER THAT VIEW SHOULD CALL
+        rospy.loginfo("ID Submitted {}".format(studentID))
         if self.cachedEigenface is None:
             self.view.warn("StudentID submitted, but no face cached on presenter")
         else:
