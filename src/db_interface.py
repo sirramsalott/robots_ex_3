@@ -91,26 +91,36 @@ class DB_Interface:
         conn = sqlite3.connect('../database.db', isolation_level=None)
         c = conn.cursor()
         c.execute("""
-                    SELECT name, email FROM Lecturer
+                    SELECT name, email, sms FROM Lecturer
                     WHERE id = ?
         """, (lecturerID,))
         result = c.fetchone()
         conn.close()
         return result
 
-    def getAbsences(self, lecturerID, time='-3 Hour'):
+    def getAbsences(self, lecturerID=None, time='-3 Hour'):
         conn = sqlite3.connect('../database.db', isolation_level=None)
         c = conn.cursor()
-        c.execute("""
-                    SELECT Missed.studentid, Student.name, Module.name, Module.id, Lecture.id, Lecture.starttime, Lecture.endtime, Lecture.location, Missed.datetime FROM Missed
-                    JOIN Lecture ON Missed.lectureid = Lecture.id
-                    JOIN Student ON Missed.studentid = Student.id
-                    JOIN Module ON Lecture.moduleid = Module.id
-                    WHERE Module.lecturerid = ?
-                    AND Missed.datetime >= datetime('now', ?)
-                    ORDER BY Lecture.id
-        """, (lecturerID,time))
-        result = c.fetchall()
+        if lecturerID != None:
+            c.execute("""
+                        SELECT Missed.studentid, Student.name, Module.name, Module.id, Lecture.id, Lecture.starttime, Lecture.endtime, Lecture.location, Missed.datetime FROM Missed
+                        JOIN Lecture ON Missed.lectureid = Lecture.id
+                        JOIN Student ON Missed.studentid = Student.id
+                        JOIN Module ON Lecture.moduleid = Module.id
+                        WHERE Module.lecturerid = ?
+                        AND Missed.datetime >= datetime('now', ?)
+                        ORDER BY Lecture.id
+            """, (lecturerID,time))
+            result = c.fetchall()
+        else:
+            c.execute("""
+                        SELECT DISTINCT Module.lecturerid, Lecturer.preferredcontact  FROM Missed
+                        JOIN Lecture ON Missed.lectureid = Lecture.id
+                        JOIN Module ON Lecture.moduleid = Module.id
+                        JOIN Lecturer ON Module.lecturerid = Lecturer.id
+                        WHERE Missed.datetime >= datetime('now', ?)
+            """, (time,))
+            result = c.fetchall()
         conn.close()
         return result
 
@@ -127,22 +137,8 @@ class DB_Interface:
         result = c.fetchall()
         return result
 
+
 if __name__ == "__main__":
     # Code to test the database interface 
     db = DB_Interface()
-    db.storeNewStudent(1549228, 0, "Bob")
-    db.storeNewStudent(1549223, 0)
-    print(db.getStudentName(1549223))
-    print(db.getStudentName(1549228))
-    print(db.getNewFaces([]))
-    db.storeAbsence(1549223, 1)
-    db.storeAbsence(1549224, 1)
-    db.storeAbsence(1549225, 1)
-    db.storeAbsence(1549226, 1)
-    db.storeAbsence(1549224, 2)
-    db.storeAbsence(1549223, 3)
-    db.storeAbsence(1549225, 1)
-    db.storeAbsence(1549223, 4)
-    db.storeAbsence(1549223, 5)
-    print('added absences')
-    print(db.getAbsences(1))
+    print(db.getAbsences())
