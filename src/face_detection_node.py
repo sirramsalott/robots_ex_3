@@ -16,7 +16,7 @@ class FaceHandler:
     MODE_TRACKING = 1
     MODE_LOCKED = 2
     FRAME_RATE = 10
-    FACE_LOST_THRESHOLD = 10
+    FACE_LOST_THRESHOLD = 50
     
     def __init__(self):
         self.framesSinceLastFace = self.FACE_LOST_THRESHOLD + 1

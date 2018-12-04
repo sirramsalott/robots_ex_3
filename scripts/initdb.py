@@ -3,7 +3,6 @@
 import sqlite3
 
 conn = sqlite3.connect('/home/robot/catkin_ws/src/robots_ex_3/database.db')
-
 c = conn.cursor()
 
 STUDENT_TABLE_NAME = "Student"
