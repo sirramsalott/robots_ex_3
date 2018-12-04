@@ -23,8 +23,9 @@ class SpeechView:
         self.presenter = presenter
 
     def deliverNag(self, lectureName, location):
-        self.soundHandle.say("You should be in {} at {}".format(lectureName, location))
-        print("You should be in {} at {}".format(lectureName, location))
+        msg = "You should be in {} at {}".format(lectureName, location)
+        print(msg)
+        os.system("say \"{}\"".format(msg))
 
     def promptForID(self):
         os.system("say \"please enter your i d\"")
@@ -74,4 +75,5 @@ class SpeechView:
         pass
 
     def warn(self, warning):
+        os.system("say \"{}\"".format(warning))
         print("Warning in UI: {}".format(warning))

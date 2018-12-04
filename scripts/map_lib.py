@@ -12,7 +12,7 @@ m = np.ones((size, size))
 
 plt.ion()
 plt.imshow(m, cmap='hot', interpolation='nearest')
-plt.draw()
+plt.show()
 
 def update():
     global pos, size, var, e, move, m
@@ -28,6 +28,14 @@ while True:
     input("Press...")
     update()
     plt.imshow(m, cmap='hot', interpolation='nearest')
-    plt.draw()
+    plt.show()
     pos = pos + move
     input("Waiting...")
+
+class Map(self):
+    def __init__(self, arr):
+        plt.ion()
+        plt.imshow(arr, cmap='hot', interpolation='nearest')
+        plt.show()
+    
+    def update(self, arr):

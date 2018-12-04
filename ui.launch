@@ -1,0 +1,5 @@
+<launch>
+
+    <node name="ui_node" pkg="robots_exercise_3" type="ui_node.py" />
+
+</launch>

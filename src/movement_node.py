@@ -87,6 +87,7 @@ class MovementNode:
         self.estimatedPoseListener = rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped,
                                                       self.estimated_pose_listener, queue_size=100)
 
+
         # Publish the robots movement commands
         self.movePublisher = rospy.Publisher("/cmd_vel", Twist, queue_size=1)
 

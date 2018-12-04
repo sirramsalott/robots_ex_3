@@ -20,7 +20,6 @@ class DB_Interface:
 
     def getStudentCurrentLecture(self, studentID):
         # ID of lecture that student should be in, if any
-
         conn = sqlite3.connect('/home/robot/catkin_ws/src/robots_ex_3/database.db', isolation_level=None)
         c = conn.cursor()
         c.execute("""
@@ -33,7 +32,9 @@ class DB_Interface:
                 ) AND strftime('%w', 'now') = day
                 AND strftime('%H:%M','now') BETWEEN starttime AND endtime
                 """, (studentID,))
-        return self.c.fetchone()
+        result = c.fetchone()
+        conn.close()
+        return result
 
     def storeAbsence(self, studentID, lectureID):
         # Make a note in the database that the student was not at this lecture
@@ -52,8 +53,18 @@ class DB_Interface:
                     JOIN Module
                     ON Lecture.moduleid = Module.id
                     WHERE Lecture.id=?
-                    """, (lectureID,))   
-        return self.c.fetchone()
+                    """, (lectureID,))
+        result = c.fetchone()
+        conn.close()   
+        return result
+
+    # def getLectureInfo(self, lectureID):
+    #     conn = sqlite3.connect('../database.db', isolation_level=None)
+    #     c = conn.cursor()
+    #     c.execute("""
+    #                 SELECT Module.name, 
+    #     """)
+    #     conn.close()
 
     # def getLectureInfo(self, lectureID):
     #     conn = sqlite3.connect('/home/robot/catkin_ws/src/robots_ex_3/database.db', isolation_level=None)
@@ -70,7 +81,8 @@ class DB_Interface:
         c.execute("INSERT OR IGNORE INTO Student(id, eigenface) VALUES (?,?)", (studentID, self.tuple_to_string(eigenface)))
         c.execute("UPDATE Student SET eigenface = ? WHERE id = ?", (self.tuple_to_string(eigenface), studentID))
         if name != None:
-            self.c.execute("UPDATE Student SET name = ? WHERE id = ?", (name, studentID))
+            c.execute("UPDATE Student SET name = ? WHERE id = ?", (name, studentID))
+        conn.close()
         pass
 
     def getNewFaces(self, existingStudentIDs):
@@ -100,7 +112,9 @@ class DB_Interface:
                     SELECT name, email FROM Lecturer
                     WHERE id = ?
         """, (lecturerID,))
-        return self.c.fetchone()
+        result = c.fetchone()
+        conn.close()
+        return result
 
     def getAbsences(self, lecturerID, time='-3 Hour'):
         conn = sqlite3.connect('/home/robot/catkin_ws/src/robots_ex_3/database.db', isolation_level=None)
@@ -114,7 +128,22 @@ class DB_Interface:
                     AND Missed.datetime >= datetime('now', ?)
                     ORDER BY Lecture.id
         """, (lecturerID,time))
-        return self.c.fetchall()
+        result = c.fetchall()
+        conn.close()
+        return result
+
+    def getLectureAbsences(self, lectureID):
+        # Return the students recorded as absent from a specified lecture within the last week.
+        conn = sqlite3.connect('../database.db', isolation_level=None)
+        c = conn.cursor()
+        c.execute("""
+                    SELECT Missed.studentid, Student.name, Missed.datetime FROM Missed
+                    JOIN Student ON Missed.studentid = Student.id
+                    WHERE Missed.lectureid = ?
+                    AND Missed.datetime >= datetime('now', '-7 Day')
+        """, (lectureID,))
+        result = c.fetchall()
+        return result
 
     def getLectureAbsences(self, lectureID):
         # Return the students recorded as absent from a specified lecture within the last week.

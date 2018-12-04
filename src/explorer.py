@@ -16,6 +16,7 @@ crop_bottom = 3100
 crop_width = crop_right - crop_left
 crop_height = crop_bottom - crop_top
 
+
 class Explorer:
 
     def __init__(self, map_model):
@@ -27,7 +28,7 @@ class Explorer:
 
         self.decay = 0.97
         self.range = 200
-	
+
         self.visualise = True #rospy.get_param("/visualise")
         if self.visualise:
             self.redraw()

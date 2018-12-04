@@ -2,7 +2,7 @@
 # Warning: this will delete everything in the database
 import sqlite3
 
-conn = sqlite3.connect('../database.db')
+conn = sqlite3.connect('/home/robot/catkin_ws/src/robots_ex_3/database.db')
 
 c = conn.cursor()
 
@@ -28,7 +28,7 @@ c.execute("PRAGMA foreign_keys = ON;")
 create_student_query = """CREATE TABLE {}(
                             id INTEGER PRIMARY KEY, 
                             name TEXT,
-                            eigenface BLOB
+                            eigenface VARCHAR
 )
 """.format(STUDENT_TABLE_NAME)
 

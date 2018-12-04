@@ -65,4 +65,4 @@ class FaceDetectionModel:
 
     def updateFaceDBCache(self):
         self.faceDBCache += [(i, f) for (i, f) in self.dbHandle.getNewFaces(existingStudentIDs=self.faceDBCache) if f is not None]
-        
+
