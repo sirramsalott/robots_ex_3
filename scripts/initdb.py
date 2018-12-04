@@ -93,7 +93,7 @@ c.execute("INSERT INTO %s(id, name) VALUES (1522968, 'George');" % STUDENT_TABLE
 c.execute("INSERT INTO %s(id, name) VALUES (1556067, 'Adriana');" % STUDENT_TABLE_NAME)
 c.execute("INSERT INTO %s(id, name) VALUES (1558595, 'Mike');" % STUDENT_TABLE_NAME)
 c.execute("INSERT INTO %s(id, name) VALUES (1559226, 'Joe');" % STUDENT_TABLE_NAME)
-c.execute("INSERT INTO %s(name, email, sms) VALUES ('Mohan', 'mattcallaway1406@gmail.com', '+447538530766');" % LECTURER_TABLE_NAME)
+c.execute("INSERT INTO %s(name, email, sms, preferredcontact) VALUES ('Mohan', 'mattcallaway1406@gmail.com', '+447538530766', 'sms');" % LECTURER_TABLE_NAME)
 c.execute("INSERT INTO %s(name, email, sms, preferredcontact) VALUES ('Bob', 'bob@bham.com', '+447867766564', 'sms');" % LECTURER_TABLE_NAME)
 c.execute("INSERT INTO %s(name, email) VALUES ('Alice', 'alice@bham.com');" % LECTURER_TABLE_NAME)
 c.execute("INSERT INTO %s(name, lecturerid) VALUES ('Intelligent Robotics', 1);" % MODULE_TABLE_NAME)
