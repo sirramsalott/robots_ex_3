@@ -34,7 +34,7 @@ create_student_query = """CREATE TABLE {}(
 create_lecturer_query = """CREATE TABLE {}(
                             id INTEGER PRIMARY KEY,
                             name TEXT,
-                            email TEXT NOT NULL,
+                            email TEXT,
                             sms TEXT,
                             preferredcontact TEXT NOT NULL DEFAULT 'email'
 )
