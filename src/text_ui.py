@@ -15,6 +15,7 @@ class TextView:
     def promptForID(self):
         self.say("please enter your i d on the laptop")
         idInput = raw_input("Please enter your ID")
+        self.say("thank you")
         self.presenter.notifyIDSubmitted(idInput)
 
     def killInteraction(self):
