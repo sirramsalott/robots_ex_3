@@ -25,5 +25,8 @@ class TextView:
         self.say(msg)
         print(msg)
 
+    def heyYou(self):
+        self.say("hey you")
+
     def say(self, msg):
         os.system("say \"{}\"".format(msg))

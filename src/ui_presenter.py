@@ -13,6 +13,10 @@ class UIPresenter:
         self.interactionCompletePub = rospy.Publisher("/interaction_complete",
                                                       Empty,
                                                       queue_size=1)
+        self.startTrackingSub = rospy.Subscriber("start_tracking_face",
+                                                 Empty,
+                                                 self.startTrackingFaceCallback,
+                                                 queue_size=1)
 
     def nagStudent(self, studentID):
         lectureID = self.dbHandle.getStudentCurrentLecture(studentID)
@@ -21,6 +25,9 @@ class UIPresenter:
             self.dbHandle.storeAbsence(studentID, lectureID)
             lectureName, location = self.dbHandle.getLectureNameAndLocation(lectureID)
             self.view.deliverNag(lectureName, location)
+
+    def startTrackingFaceCallback(self, msg):
+        self.view.heyYou()
 
     def newUser(self, eigenface):
         self.cachedEigenface = eigenface
