@@ -18,14 +18,11 @@ class UIPresenter:
         lectureID = self.dbHandle.getStudentCurrentLecture(studentID)
         print("Student recognised: {}!".format(studentID))
         if lectureID is not None:
-            print("student id of type {}: {}".format(type(studentID), studentID))
-            print("lecture id of type {}: {}".format(type(lectureID), lectureID))
             self.dbHandle.storeAbsence(studentID, lectureID)
             lectureName, location = self.dbHandle.getLectureNameAndLocation(lectureID)
             self.view.deliverNag(lectureName, location)
 
     def newUser(self, eigenface):
-        print("EIGENFACE: {}".format(eigenface))
         self.cachedEigenface = eigenface
         self.view.promptForID()
 
