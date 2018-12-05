@@ -1,5 +1,6 @@
 import db_interface as db
 import rospy
+from std_msgs.msg import Empty
 
 
 class UIPresenter:
@@ -10,6 +11,9 @@ class UIPresenter:
         self.view = view
         self.view.setPresenter(self)
         self.dbHandle = db.DB_Interface()
+        self.interactionCompletePub = rospy.Publisher("/interaction_complete",
+                                                      Empty,
+                                                      queue_size=1)
 
     def nagStudent(self, studentID):
         lectureID = self.dbHandle.getStudentCurrentLecture(studentID)
@@ -27,6 +31,7 @@ class UIPresenter:
     def killInteraction(self):
         #self.cachedEigenface = None
         self.view.killInteraction()
+        self.interactionCompletePub.publish(Empty())
 
     def notifyIDSubmitted(self, studentID):
         # THIS IS THE ONLY METHOD ON PRESENTER THAT VIEW SHOULD CALL
@@ -36,3 +41,4 @@ class UIPresenter:
         else:
             self.dbHandle.storeNewStudent(studentID, self.cachedEigenface)
             self.cachedEigenface = None
+            self.interactionCompletePub.publish(Empty())
