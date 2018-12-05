@@ -41,7 +41,7 @@ class FaceHandler:
         self.newFaceAddedSub = rospy.Subscriber("new_face_added", Empty, self.newFaceCallback, queue_size=1)
 
         self.bridge = CvBridge()
-        self.framesInWaitingModel = 0
+        self.framesInWaitingMode = 0
 
     def completeCallback(self, msg):
         self.mode = self.MODE_WAITING
@@ -69,7 +69,7 @@ class FaceHandler:
                 cv2.waitKey(1)
 
     def waitingMode(self, img):
-        self.framesInWaitingModel += 1
+        self.framesInWaitingMode += 1
         if self.framesInWaitingMode >= self.WAIT_THRESHOLD:
             self.mode = self.MODE_SCANNING
             self.framesInWaitingMode = 0
@@ -106,6 +106,7 @@ class FaceHandler:
             if len(matches) == 0:
                 self.faceLost()
             else:
+                self.framesSinceLastFace = 0
                 box = matches[0][0]
                 face = matches[0][1]
                 img = self.drawBoundingBox(img, box,
@@ -124,7 +125,7 @@ class FaceHandler:
         return img
 
     def lockedMode(self, img):
-        img = cv.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         return img
 
     def faceLost(self):

@@ -29,7 +29,10 @@ class DB_Interface:
                 """, (studentID,))
         result = c.fetchone()
         conn.close()
-        return result
+        if result is not None and len(result) > 0:
+            return result[0]
+        else:
+            return None
 
     def storeAbsence(self, studentID, lectureID):
         # Make a note in the database that the student was not at this lecture
@@ -115,7 +118,7 @@ class DB_Interface:
         conn.close()
         return result
 
-    def getAbsences(self, lecturerID, time='-3 Hour'):
+    def getAbsences(self, lecturerID=None, time='-3 Hour'):
         conn = sqlite3.connect('/home/robot/catkin_ws/src/robots_ex_3/database.db', isolation_level=None)
         c = conn.cursor()
         if lecturerID != None:

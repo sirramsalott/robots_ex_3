@@ -1,15 +1,17 @@
+#! /usr/bin/env python
+
 import rospy
-from sensor.msg import LaserScan
+from sensor_msgs.msg import LaserScan
 import math
 
-class Fixer(self):
+class Fixer:
     
     def __init__(self):
         self.sub = rospy.Subscriber("/broken_scan", LaserScan, self.reading, queue_size=100)
         self.pub = rospy.Publisher("/base_scan", LaserScan, queue_size=100)
         rospy.spin() 
     
-    def fix(x, m):
+    def fix(self, x, m):
         if math.isnan(x):
             return m - 0.1
         else:
@@ -25,11 +27,11 @@ class Fixer(self):
         resp.scan_time = msg.scan_time
         resp.range_min = msg.range_min
         resp.range_max = msg.range_max
-        resp.ranges = [fix(x, msg.range_max) for x in msg.ranges]
+        resp.ranges = [self.fix(x, msg.range_max) for x in msg.ranges]
         resp.intensities = msg.intensities
         self.pub.publish(resp)
 
 
-if __name__ == '__main__'
+if __name__ == '__main__':
     rospy.init_node('fix_laser_scan')
     fixer = Fixer()

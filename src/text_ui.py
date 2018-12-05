@@ -1,3 +1,5 @@
+import os
+
 class TextView:
     def __init__(self):
         self.presenter = None
@@ -6,9 +8,12 @@ class TextView:
         self.presenter = presenter
 
     def deliverNag(self, lectureName, location):
-        print("You should be in {} at {}".format(lectureName, location))
+        msg = "You should be in {} at {}".format(lectureName, location)
+        print(msg)
+        self.say(msg)
 
     def promptForID(self):
+        self.say("please enter your i d on the laptop")
         idInput = raw_input("Please enter your ID")
         self.presenter.notifyIDSubmitted(idInput)
 
@@ -16,4 +21,9 @@ class TextView:
         pass
 
     def warn(self, warning):
-        print("Warning in UI: {}".format(warning))
+        msg = "Warning in U I: {}".format(warning)
+        self.say(msg)
+        print(msg)
+
+    def say(self, msg):
+        os.system("say \"{}\"".format(msg))

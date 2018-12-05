@@ -9,10 +9,10 @@ import util
 import random as rand
 import cv2
 
-crop_left = 2900
-crop_right = 3100
-crop_top = 2900
-crop_bottom = 3100
+crop_left = 0#2700
+crop_right = 4000#3300
+crop_top = 0#2700
+crop_bottom = 4000#3300
 crop_width = crop_right - crop_left
 crop_height = crop_bottom - crop_top
 
@@ -80,8 +80,9 @@ class Explorer:
             high, low = self.max_min(self.get_h_map())
             mod = cv2.normalize(self.get_h_map(), None, 0, 255, cv2.NORM_MINMAX)
             print(mod)
+            print(self.max_min(mod))
             #mod = np.zeros((500,500), np.uint8)
-            #cv2.imshow("Exploration map", mod)
+            cv2.imwrite("/home/robot/im.png", mod)
             rospy.logwarn("done imshow")
             #cv2.waitKey()
             rospy.logwarn("Done")

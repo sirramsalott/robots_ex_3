@@ -1,6 +1,6 @@
 from db_interface import DB_Interface
 import smtplib
-from email.message import EmailMessage
+from email.message import Message
 from twilio.rest import Client
 import sys
 
@@ -20,7 +20,7 @@ auth_token  = '4e8bf5caf1b701bba883a1633e22f92f'
 
 
 class Comm_Sender:
-    def __init__(self, dbif : DB_Interface):
+    def __init__(self, dbif):
         self.dbif = dbif
         self.client = Client(account_sid, auth_token)
 
@@ -61,7 +61,7 @@ class Comm_Sender:
     def emailLecturer(self, lecturerID, content):
         lecturer = self.dbif.getLecturer(lecturerID)
             
-        msg = EmailMessage()
+        msg = Message()
         msg['Subject'] = 'Snitch Report'
         msg['From'] = 'Stuart the Snitch'
         msg['To'] = lecturer[1]
