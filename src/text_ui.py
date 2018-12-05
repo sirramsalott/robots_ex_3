@@ -31,3 +31,6 @@ class TextView:
 
     def say(self, msg):
         os.system("say \"{}\"".format(msg))
+
+    def deliverNoAbsence(self, msg):
+        self.say("You are free")

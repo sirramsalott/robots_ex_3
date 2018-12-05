@@ -25,6 +25,8 @@ class UIPresenter:
             self.dbHandle.storeAbsence(studentID, lectureID)
             lectureName, location = self.dbHandle.getLectureNameAndLocation(lectureID)
             self.view.deliverNag(lectureName, location)
+        else:
+            self.view.deliverNoAbsence()
 
     def startTrackingFaceCallback(self, msg):
         self.view.heyYou()
