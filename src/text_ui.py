@@ -15,6 +15,7 @@ class TextView:
     def promptForID(self):
         self.say("please enter your i d on the laptop")
         idInput = raw_input("Please enter your ID")
+        self.say("thank you")
         self.presenter.notifyIDSubmitted(idInput)
 
     def killInteraction(self):
@@ -25,5 +26,11 @@ class TextView:
         self.say(msg)
         print(msg)
 
+    def heyYou(self):
+        self.say("hey you")
+
     def say(self, msg):
         os.system("say \"{}\"".format(msg))
+
+    def deliverNoAbsence(self):
+        self.say("You are free")

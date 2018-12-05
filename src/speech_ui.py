@@ -93,3 +93,9 @@ class SpeechView:
     def warn(self, warning):
         os.system("say \"{}\"".format(warning))
         print("Warning in UI: {}".format(warning))
+
+    def heyYou(self):
+        os.system("say \"hey you\"")
+
+    def deliverNoAbsence(self):
+        os.system("say \"You are free\"")
