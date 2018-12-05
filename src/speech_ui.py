@@ -44,7 +44,7 @@ class SpeechView:
         rospy.loginfo("please enter your id")
         self.listening_for_id = True
         self.lastcounter = self.counter
-        self.timer = rospy.Timer(rospy.Duration(5), self.timer_callback)
+        self.timer = rospy.Timer(rospy.Duration(10), self.timer_callback)
         rospy.loginfo("timer started")
         #idInput = raw_input("Please enter your id")
 

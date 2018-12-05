@@ -101,13 +101,13 @@ c.execute("INSERT INTO %s(name, lecturerid) VALUES ('Maths', 1);" % MODULE_TABLE
 c.execute("INSERT INTO %s(name, lecturerid) VALUES ('Security', 3);" % MODULE_TABLE_NAME)
 c.execute("INSERT INTO %s(studentid, moduleid) VALUES (1549223, 1);" % ENROLLMENT_TABLE_NAME) # Matt
 c.execute("INSERT INTO %s(studentid, moduleid) VALUES (1549223, 2);" % ENROLLMENT_TABLE_NAME) # Matt
-c.execute("INSERT INTO %s(studentid, moduleid) VALUES (1522968, 1);" % ENROLLMENT_TABLE_NAME) # George
 c.execute("INSERT INTO %s(studentid, moduleid) VALUES (1522968, 2);" % ENROLLMENT_TABLE_NAME) # George
+c.execute("INSERT INTO %s(studentid, moduleid) VALUES (1522968, 3);" % ENROLLMENT_TABLE_NAME) # George
 c.execute("INSERT INTO %s(studentid, moduleid) VALUES (1558595, 1);" % ENROLLMENT_TABLE_NAME) # Mike
 c.execute("INSERT INTO %s(studentid, moduleid) VALUES (1558595, 3);" % ENROLLMENT_TABLE_NAME) # Mike
 c.execute("INSERT INTO %s(studentid, moduleid) VALUES (1556067, 1);" % ENROLLMENT_TABLE_NAME) # Adriana
-c.execute("INSERT INTO %s(starttime, day, endtime, location, moduleid) VALUES ('01:30', '3', '02:30', 'Room 101',1);" % LECTURE_TABLE_NAME)
-c.execute("INSERT INTO %s(starttime, day, endtime, location, moduleid) VALUES ('01:00', '3', '02:30', 'Room 203',2);" % LECTURE_TABLE_NAME)
+c.execute("INSERT INTO %s(starttime, day, endtime, location, moduleid) VALUES ('01:30', '3', '03:00', 'Room 101',1);" % LECTURE_TABLE_NAME)
+c.execute("INSERT INTO %s(starttime, day, endtime, location, moduleid) VALUES ('01:00', '3', '03:30', 'Room 203',2);" % LECTURE_TABLE_NAME)
 c.execute("INSERT INTO %s(starttime, day, endtime, location, moduleid) VALUES ('09:00', '2', '10:00', 'Room 304',2);" % LECTURE_TABLE_NAME)
 c.execute("INSERT INTO %s(starttime, day, endtime, location, moduleid) VALUES ('13:00', '2', '14:00', 'Room 105',2);" % LECTURE_TABLE_NAME)
 c.execute("INSERT INTO %s(starttime, day, endtime, location, moduleid) VALUES ('10:00', '3', '11:00', 'Room 205',1);" % LECTURE_TABLE_NAME)

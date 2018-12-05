@@ -26,8 +26,8 @@ class Explorer:
 
         self.heatmap = np.ones((self.map_model.map_width, self.map_model.map_height))
 
-        self.decay = 0.97
-        self.range = 200
+        self.decay = 0.995
+        self.range = 300
 
         self.visualise = True #rospy.get_param("/visualise")
         if self.visualise:
@@ -45,9 +45,9 @@ class Explorer:
     def update_map(self, pose):
         rospy.logwarn("Updating map")
         (x, y) = util.pose_to_map_coords(self.map_model, pose) 
-        a = multivariate_normal.pdf(np.linspace(0, crop_width, num=crop_width), mean=pose.position.x - crop_left,
+        a = multivariate_normal.pdf(np.linspace(0, crop_width, num=crop_width), mean=x - crop_left,
                                     cov=self.range)
-        b = multivariate_normal.pdf(np.linspace(0, crop_height, num=crop_height), mean=pose.position.y - crop_top,
+        b = multivariate_normal.pdf(np.linspace(0, crop_height, num=crop_height), mean=y - crop_top,
                                     cov=self.range)
         m = (np.array(a)[np.newaxis]).T.dot((np.array(a)[np.newaxis]))
         self.heatmap[crop_left:crop_right, crop_top:crop_bottom] *= self.decay
