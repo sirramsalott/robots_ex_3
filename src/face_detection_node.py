@@ -15,8 +15,10 @@ class FaceHandler:
     MODE_SCANNING = 0
     MODE_TRACKING = 1
     MODE_LOCKED = 2
+    MODE_WAITING = 3
     FRAME_RATE = 10
     FACE_LOST_THRESHOLD = 10
+    WAIT_THRESHOLD = 20
     
     def __init__(self):
         self.framesSinceLastFace = self.FACE_LOST_THRESHOLD + 1
@@ -35,13 +37,14 @@ class FaceHandler:
         self.facePendPub = rospy.Publisher("face_pend", Empty, queue_size=1)
 
         self.imageSub = rospy.Subscriber("/usb_cam/image_raw", Image, self.imageCallback, queue_size=1)
-        self.interactionCompleteSub = rospy.Subscriber("interaction_complete", Empty, self.completeCallback, queue_size=1)
+        self.interactionCompleteSub = rospy.Subscriber("/interaction_complete", Empty, self.completeCallback, queue_size=1)
         self.newFaceAddedSub = rospy.Subscriber("new_face_added", Empty, self.newFaceCallback, queue_size=1)
 
         self.bridge = CvBridge()
+        self.framesInWaitingMode = 0
 
     def completeCallback(self, msg):
-        self.mode = self.MODE_SCANNING
+        self.mode = self.MODE_WAITING
         self.trackingFace = None
 
     def imageCallback(self, img):
@@ -58,9 +61,20 @@ class FaceHandler:
             elif self.mode == self.MODE_LOCKED:
                 img = self.lockedMode(img)
 
+            elif self.mode == self.MODE_WAITING:
+                img = self.waitingMode(img)
+
             if self.visualise:
                 cv2.imshow("Camera Stream", img)
                 cv2.waitKey(1)
+
+    def waitingMode(self, img):
+        self.framesInWaitingMode += 1
+        if self.framesInWaitingMode >= self.WAIT_THRESHOLD:
+            self.mode = self.MODE_SCANNING
+            self.framesInWaitingMode = 0
+
+        return img
 
     def newFaceCallback(self, msg):
         self.fdm.updateFaceDBCache()
@@ -92,6 +106,7 @@ class FaceHandler:
             if len(matches) == 0:
                 self.faceLost()
             else:
+                self.framesSinceLastFace = 0
                 box = matches[0][0]
                 face = matches[0][1]
                 img = self.drawBoundingBox(img, box,
@@ -110,13 +125,7 @@ class FaceHandler:
         return img
 
     def lockedMode(self, img):
-        boundingBoxes = self.fdm.getBoundingBoxes(img)
-        for box in boundingBoxes:
-            if self.fdm.facesMatch(box, img, self.trackingFace)[0]:
-                return self.drawBoundingBox(img, box,
-                                            colour=(255, 0, 0))
-
-        self.faceLost()
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         return img
 
     def faceLost(self):

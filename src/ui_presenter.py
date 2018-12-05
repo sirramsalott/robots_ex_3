@@ -2,7 +2,6 @@ import db_interface as db
 import rospy
 from std_msgs.msg import Empty
 
-
 class UIPresenter:
     def __init__(self, view):
         self.cachedEigenface = None
@@ -17,8 +16,10 @@ class UIPresenter:
 
     def nagStudent(self, studentID):
         lectureID = self.dbHandle.getStudentCurrentLecture(studentID)
-        print("Student recognised!")
+        print("Student recognised: {}!".format(studentID))
         if lectureID is not None:
+            print("student id of type {}: {}".format(type(studentID), studentID))
+            print("lecture id of type {}: {}".format(type(lectureID), lectureID))
             self.dbHandle.storeAbsence(studentID, lectureID)
             lectureName, location = self.dbHandle.getLectureNameAndLocation(lectureID)
             self.view.deliverNag(lectureName, location)

@@ -24,7 +24,7 @@ import explorer
 class BaseStates(Enum):
     EXPLORE = 1
     TRACK_FACE = 2
-    TRACK_LOSS = 3
+    PEND = 3
     STILL = 4
     BOOT = 5
 
@@ -79,9 +79,13 @@ class MovementNode:
 
         # Subscribe to the facial topics
         self.faceTrackListener = rospy.Subscriber("/track_face", TrackFace, self.face_listener, queue_size=1)
-        self.faceLockListener = rospy.Subscriber("/face_locked", StudentFaceLocked, self.face_lock_listener, queue_size=1)
+        self.faceStudentLockListener = rospy.Subscriber("/student_face_locked", StudentFaceLocked, self.student_face_lock_listener, queue_size=1)
+        self.faceNewLockListener = rospy.Subscriber("/new_face_locked", NewFaceLocked, self.new_face_lock_listener, queue_size=1)
         self.faceLossListener = rospy.Subscriber("/face_lost", Empty, self.face_loss_listener, queue_size=1)
         self.facePendListener = rospy.Subscriber("/face_pend", Empty, self.face_pend_listener, queue_size=1)
+
+        # Listen for completed interactions
+        self.interactionCompleteListener = rospy.Subscriber("/interaction_complete", Empty, self.interaction_complete, queue_size=1)
 
         # Listen for estimated poses from amcl
         self.estimatedPoseListener = rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped,
@@ -137,12 +141,13 @@ class MovementNode:
             self.track_face(True)
             return
 
-        if self.base_state == BaseStates.TRACK_LOSS:
+        if self.base_state == BaseStates.PEND:
             self.track_face(False)
             return
 
         if self.base_state == BaseStates.STILL:
-            self.track_face(False)
+            #self.track_face(False)
+            return
 
     def print_state(self):
         """
@@ -164,7 +169,7 @@ class MovementNode:
         """
         rospy.logwarn("Received pose")
         self.pose = pose_message
-        #self.explorer.update_map(self.pose.pose.pose)
+        self.explorer.update_map(self.pose.pose.pose)
 
     def active_cb(self):
         """
@@ -280,12 +285,17 @@ class MovementNode:
         self.base_state = BaseStates.TRACK_FACE
         self.trigger()
 
-    def face_lock_listener(self, face):
+    def new_face_lock_listener(self, msg):
+        self.face_lock_listener()
+
+    def student_face_lock_listener(self, msg):
+        self.face_lock_listener()
+
+    def face_lock_listener(self):
         """
         Stand still when the face is locked
         """
         rospy.loginfo("Face lock received!")
-        self.recent_face = face
         self.base_state = BaseStates.STILL
         self.trigger()
 
@@ -294,7 +304,7 @@ class MovementNode:
         Keep tracking but don't move forward
         """
         rospy.loginfo("Face pend received!")
-        self.base_state = BaseStates.TRACK_LOSS
+        self.base_state = BaseStates.PEND
         self.trigger()
 
     def face_loss_listener(self, msg):
@@ -302,6 +312,15 @@ class MovementNode:
         Return to exploration when the face is lost
         """
         rospy.loginfo("Face loss received!")
+        self.base_state = BaseStates.EXPLORE
+        self.trigger()
+
+
+    def interaction_complete(self, msg):
+        """
+        Return to exploration when the face is lost
+        """
+        rospy.loginfo("Interaction complete received!")
         self.base_state = BaseStates.EXPLORE
         self.trigger()
 

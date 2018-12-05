@@ -1,6 +1,6 @@
 <launch>
 
-    <arg name="video_dev" default="/dev/video0" />
+    <arg name="video_dev" default="/dev/video1" />
     <arg name="visualise" default="true" />
     <param name="visualise" value="$(arg visualise)" />
 

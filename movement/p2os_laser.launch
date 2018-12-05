@@ -9,10 +9,11 @@
 		
 	<!-- run hokuyo laser node -->
 	<node pkg="urg_node" type="urg_node" name="hokuyo">
-		<remap from="/laser" to="/base_scan" />
-		<remap from="/scan" to="/base_scan" />
+		<remap from="/laser" to="/broken_scan" />
+		<remap from="/scan" to="/broken_scan" />
 	</node>
 
+	<node name="fix_laser_scan" pkg="robots_exercise_3" type="fix_laser_scan.py" />
 
 	<!-- transform laser co-ordinates into robot-base co-ordinate frame -->
 	<node pkg="tf" type="static_transform_publisher" name="stp_laser" output="screen" args="0.135 0 0.202 0 0 0 base_link laser 100" />

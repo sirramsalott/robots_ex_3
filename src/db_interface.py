@@ -1,12 +1,7 @@
 import sqlite3
+import rospy
 
 class DB_Interface:
-    def __init__(self):
-        self.conn = sqlite3.connect('/home/robot/catkin_ws/src/robots_ex_3/database.db', isolation_level=None)
-        self.c = self.conn.cursor()
-
-    def __del__(self):
-        self.conn.close()
 
     def tuple_to_string(self, t):
         if t is None:
@@ -34,7 +29,10 @@ class DB_Interface:
                 """, (studentID,))
         result = c.fetchone()
         conn.close()
-        return result
+        if result is not None and len(result) > 0:
+            return result[0]
+        else:
+            return None
 
     def storeAbsence(self, studentID, lectureID):
         # Make a note in the database that the student was not at this lecture
@@ -87,12 +85,16 @@ class DB_Interface:
 
     def getNewFaces(self, existingStudentIDs):
         # out of the list of existing student IDs needs to select student.id student.eigenface from student where student.id not in existing student ids
+        rospy.logwarn(existingStudentIDs)
         conn = sqlite3.connect('/home/robot/catkin_ws/src/robots_ex_3/database.db', isolation_level=None)
         c = conn.cursor()
-        c.execute("""
-                    SELECT id, eigenface FROM Student
-                    WHERE id NOT IN (%s)
-        """ % ','.join('?' * len(existingStudentIDs)), existingStudentIDs)
+        if not existingStudentIDs:
+            c.execute("SELECT id, eigenface FROM Student")
+     	else:
+	    c.execute("""
+               	SELECT id, eigenface FROM Student
+               	WHERE id NOT IN (%s)
+            """ % ','.join('?' * len(existingStudentIDs)), existingStudentIDs)
         result = c.fetchall()
         conn.close()
         return [(i, self.string_to_tuple(f)) for i, f in result]
@@ -116,7 +118,7 @@ class DB_Interface:
         conn.close()
         return result
 
-    def getAbsences(self, lecturerID, time='-3 Hour'):
+    def getAbsences(self, lecturerID=None, time='-3 Hour'):
         conn = sqlite3.connect('/home/robot/catkin_ws/src/robots_ex_3/database.db', isolation_level=None)
         c = conn.cursor()
         if lecturerID != None:
@@ -165,8 +167,7 @@ class DB_Interface:
                     WHERE Missed.lectureid = ?
                     AND Missed.datetime >= datetime('now', '-7 Day')
         """, (lectureID,))
-        return self.c.fetchall()
-      
+        return c.fetchall()
 
 if __name__ == "__main__":
     # Code to test the database interface 

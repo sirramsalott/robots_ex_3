@@ -27,7 +27,7 @@ class UIHandler:
                                             self.faceLostCallback,
                                             queue_size=1)
 
-        self.interactionCompletePub = rospy.Publisher("interaction_complete",
+        self.interactionCompletePub = rospy.Publisher("/interaction_complete",
                                                       Empty,
                                                       queue_size=1)
         self.newFaceAddedPub = rospy.Publisher("new_face_added",
@@ -50,8 +50,8 @@ class UIHandler:
 
 
 if __name__ == "__main__":
-    #view = TextView()
-    view = SpeechView()
+    view = TextView()
+    #view = SpeechView()
     uiHandler = UIHandler(view)
     rospy.init_node("ui")
     rospy.spin()
