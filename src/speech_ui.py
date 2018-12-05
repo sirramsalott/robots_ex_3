@@ -6,7 +6,7 @@ class SpeechView:
 
     def __init__(self):
         self.presenter = None
-        self.listening_for_id = True
+        self.listening_for_id = False
         self.checking = False
         self.got_id = False
         self.counter = 0
@@ -16,6 +16,9 @@ class SpeechView:
                                                 self.number_subscriber_callback,
                                                 queue_size=1)
 
+    def dummy_callback(self, event):
+        pass
+    
     def greeting(self, name):
         os.system("say \"hello {}\"".format(name))
         
@@ -27,10 +30,22 @@ class SpeechView:
         print(msg)
         os.system("say \"{}\"".format(msg))
 
+    def timer_callback(self, event):
+        if self.counter == self.lastcounter:
+            self.listening_for_id = False
+            self.presenter.killInteraction()
+            self.timer.shutdown()
+            rospy.loginfo("you slow")
+        else:
+            self.lastcounter = self.counter
+
     def promptForID(self):
         os.system("say \"please enter your i d\"")
         rospy.loginfo("please enter your id")
         self.listening_for_id = True
+        self.lastcounter = self.counter
+        self.timer = rospy.Timer(rospy.Duration(5), self.timer_callback)
+        rospy.loginfo("timer started")
         #idInput = raw_input("Please enter your id")
 
     def number_subscriber_callback(self, msg):
@@ -68,6 +83,7 @@ class SpeechView:
             self.presenter.notifyIDSubmitted(self.word)
             self.word = ""
             self.listening_for_id = False
+            self.timer.shutdown()
             self.counter = 0
             self.got_id = False
 

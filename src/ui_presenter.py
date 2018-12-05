@@ -32,6 +32,7 @@ class UIPresenter:
     def killInteraction(self):
         #self.cachedEigenface = None
         self.view.killInteraction()
+        self.interactionCompletePub.publish(Empty())
 
     def notifyIDSubmitted(self, studentID):
         # THIS IS THE ONLY METHOD ON PRESENTER THAT VIEW SHOULD CALL
