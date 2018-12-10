@@ -1,6 +1,7 @@
 from db_interface import DB_Interface
 import smtplib
-from email.message import Message
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from twilio.rest import Client
 import sys
 
@@ -61,16 +62,16 @@ class Comm_Sender:
     def emailLecturer(self, lecturerID, content):
         lecturer = self.dbif.getLecturer(lecturerID)
             
-        msg = Message()
+        msg = MIMEMultipart()
         msg['Subject'] = 'Snitch Report'
         msg['From'] = 'Stuart the Snitch'
         msg['To'] = lecturer[1]
-        msg.set_content(content)
+        msg.attach(MIMEText(content, 'plain'))
         try:  
             server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
             server.ehlo()
             server.login(gmail_user, gmail_pass)
-            server.send_message(msg)
+            server.sendmail(msg['From'], msg['To'], msg.as_string())
             server.close()
             print('Email sent!')
         except:  

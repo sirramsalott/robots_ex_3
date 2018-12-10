@@ -50,8 +50,8 @@ class UIHandler:
 
 
 if __name__ == "__main__":
-    #view = TextView()
-    view = SpeechView()
+    view = TextView()
+    #view = SpeechView()
     uiHandler = UIHandler(view)
     rospy.init_node("ui")
     rospy.spin()

@@ -1,4 +1,4 @@
-footprint: [ [-0.28,-0.28], [-0.28,0.28], [0.28,0.28], [0.28,-0.28] ]
+footprint: [ [-0.24,-0.24], [-0.24,0.24], [0.24,0.24], [0.24,-0.24] ]
 footprint_padding: 0.01
 
 robot_base_frame: base_link
@@ -22,6 +22,5 @@ obstacles_layer:
   laser: {data_type: LaserScan, clearing: true, marking: true, topic: /base_scan, inf_is_valid: true}
 
 inflation_layer:
-  inflation_radius: 0.25
+  inflation_radius: 0.35
   cost_scaling_factor: 10.0
-  lethal_cost_threshold: 10.0

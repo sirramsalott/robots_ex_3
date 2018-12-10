@@ -1,0 +1,44 @@
+<launch>
+
+  <arg name="visualise" default="true" />
+  <param name="visualise" value="$(arg visualise)" />
+
+  <param name="axis_vx" type="int" value="1" />
+  <param name="axis_vw" type="int" value="0" />
+  <param name="axis_vy" type="int" value="2" />
+  <param name="deadman_button" type="int" value="4" />
+  <param name="run_button" type="int" value="4" />
+  <node pkg="p2os_teleop" type="p2os_teleop" name="p2os_teleop">
+    <remap from="/des_vel" to="/base_controller/command" />
+  </node>
+
+  <node pkg="joy" type="joy_node" name="pioneer_joy_controller" />
+
+  <node pkg="p2os_driver" type="p2os_driver" name="p2os">
+    <param name="port" value="/dev/ttyUSB0" />
+    <param name="use_sonar" value="false" />
+    <remap from="/pose" to="/odom" />
+  </node>
+
+  <node pkg="urg_node" type="urg_node" name="hokuyo">
+    <remap from="/laser" to="/base_scan" />
+    <remap from="/scan" to="base_scan" />
+  </node>
+
+  <node pkg="tf" type="static_transform_publisher" name="stp_laser" output="screen" args="0.135 0 0.202 0 0 0 base_link laser 100" />
+
+  <node name="rviz" type="rviz" pkg="rviz" args="-d $(find robots_exercise_3)/navigation.rviz" />
+
+  <node name="joy_movement_node" pkg="robots_exercise_3" type="joy_movement.py">
+	<param name="available_space_file" value="$(find robots_exercise_3)/movement/stage/available_space.pgm" />
+  </node>
+
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find robots_exercise_3)/movement/stage/map.yaml" />
+  <node name="available_space_server" pkg="map_server" type="map_server" args="$(find robots_exercise_3)/movement/stage/available_space.yaml">
+    <remap from="/map" to="/available_space"/>
+  </node>
+
+
+  <include file="$(find robots_exercise_3)/movement/amcl.launch" />
+
+</launch>
