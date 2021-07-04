@@ -35,6 +35,7 @@ class FaceHandler:
         self.newFaceLockedPub = rospy.Publisher("new_face_locked", NewFaceLocked, queue_size=1)
         self.faceLostPub = rospy.Publisher("face_lost", Empty, queue_size=1)
         self.facePendPub = rospy.Publisher("face_pend", Empty, queue_size=1)
+        self.startTrackingPub = rospy.Publisher("start_tracking_face", Empty, queue_size=1)
 
         self.imageSub = rospy.Subscriber("/usb_cam/image_raw", Image, self.imageCallback, queue_size=1)
         self.interactionCompleteSub = rospy.Subscriber("/interaction_complete", Empty, self.completeCallback, queue_size=1)
@@ -83,6 +84,7 @@ class FaceHandler:
         boundingBoxes = self.fdm.getBoundingBoxes(img)
         print(boundingBoxes)
         if len(boundingBoxes) > 0:
+            self.startTrackingPub.publish(Empty())
             self.trackingFace = self.fdm.selectFaceToTrack(boundingBoxes, img)
             self.mode = self.MODE_TRACKING
 
